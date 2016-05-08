@@ -10,30 +10,14 @@ Arduilink::Arduilink(unsigned int _id, void(*_serial)(const char *)) {
 	sensorsCount = 0;
 }
 
-/*void Arduilink::setValue(unsigned int _id, long _value) {
-	char buff[256];
-	sprintf(buff, "D:%d;%d;%d\n", id, _id, _value);
-	serial(buff);
-}*/
-void Arduilink::setValue(unsigned int _id, char* _value) {
-	Sensor* sensor = head;
-	while (sensor != NULL) {
-		if (sensor->id == _id) break;
-		sensor = sensor->next;
-	}
-	if (sensor == NULL)
-		return; // TODO Debug
-	char buff[256];
-	sprintf(buff, "D:%d;%d;%s;%s\n", id, _id, _value, sensor->name);
-	serial(buff);
-}
 
-int Arduilink::addSensor(unsigned int _id, char* _name) {
-	Sensor *sensor;
-	sensor = new Sensor;
+SensorItem* Arduilink::addSensor(unsigned int _id, SensorType type, char* _name) {
+	SensorItem *sensor;
+	sensor = new SensorItem;
 
 	sensor->id = _id;
 	sensor->name = _name;
+	sensor->type = type;
 
 	sensor->next = head;
 	head = sensor;
@@ -43,14 +27,34 @@ int Arduilink::addSensor(unsigned int _id, char* _name) {
 
 	++sensorsCount;
 
-	return 1;
+	return sensor;
 }
 
+SensorItem* Arduilink::getSensor(unsigned int _id) {
+	SensorItem* sensor = head;
+	while (sensor != NULL) {
+		if (sensor->id == _id) break;
+		sensor = sensor->next;
+	}
+	return sensor;
+}
+
+void Arduilink::setValue(unsigned int _id, char* _value) {
+	SensorItem* sensor = getSensor(_id);
+	if (sensor == NULL) return; // TODO Debug
+	if (_value == sensor->value) return;
+	sensor->value = _value;
+	char buff[256];
+	sprintf(buff, "D:%d;%d;%s;%s\n", id, _id, _value, sensor->name);
+	serial(buff);
+}
+
+
 void Arduilink::printSensors() {
-	Sensor* sensor = head;
+	SensorItem* sensor = head;
 	while (sensor != NULL) {
 		char buff[256];
-		sprintf(buff, "S:%d;%d;%s;tick\n", id, sensor->id, sensor->name);
+		sprintf(buff, "S:%d;%d;%s;%d\n", id, sensor->id, sensor->name, sensor->type);
 		serial(buff);
 		sensor = sensor->next;
 	}
