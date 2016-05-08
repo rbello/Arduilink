@@ -1,7 +1,6 @@
 #include <Arduilink.h>
-#include <stdint.h>
-#include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 Arduilink::Arduilink(unsigned int _id, void(*_serial)(const char *)) {
 	id = _id;
@@ -11,7 +10,7 @@ Arduilink::Arduilink(unsigned int _id, void(*_serial)(const char *)) {
 }
 
 
-SensorItem* Arduilink::addSensor(unsigned int _id, SensorType type, char* _name) {
+SensorItem* Arduilink::addSensor(unsigned int _id, SensorType type, const char* _name) {
 	SensorItem *sensor;
 	sensor = new SensorItem;
 
@@ -39,10 +38,13 @@ SensorItem* Arduilink::getSensor(unsigned int _id) {
 	return sensor;
 }
 
-void Arduilink::setValue(unsigned int _id, char* _value) {
+void Arduilink::setValue(unsigned int _id, const char* _value) {
 	SensorItem* sensor = getSensor(_id);
 	if (sensor == NULL) return; // TODO Debug
-	if (_value == sensor->value) return;
+	
+	//if (strncmp(_value, sensor->value, strlen(_value)) == 0) return;
+	//if (strcmp(copy, sensor->value) == 0) return;
+
 	sensor->value = _value;
 	char buff[256];
 	sprintf(buff, "D:%d;%d;%s;%s\n", id, _id, _value, sensor->name);

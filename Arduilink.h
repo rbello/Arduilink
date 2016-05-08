@@ -43,8 +43,8 @@ typedef enum  {
 typedef struct SensorItem {
 	unsigned int id;
 	SensorType type;
-	char* name;
-	char* value;
+	const char* name;
+	const char* value;
 	SensorItem* next;
 };
 
@@ -52,8 +52,8 @@ class Arduilink {
 public:
 	Arduilink(unsigned int nodeId, void(*serialStream)(const char *));
 
-	SensorItem* addSensor(unsigned int sensorId, SensorType type, char* sensorName);
-	void setValue(unsigned int sensorId, char* sensorValue);
+	SensorItem* addSensor(unsigned int sensorId, SensorType type, const char* sensorName);
+	void setValue(unsigned int sensorId, const char* sensorValue);
 	SensorItem* getSensor(unsigned int sensorId);
 	void printSensors();
 
