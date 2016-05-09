@@ -33,6 +33,7 @@ void loop()
 	{
 		link.setValue(1, mySensor.getTemperature());
 		link.setValue(2, mySensor.getHumidity());
+		sleep(5000);
 	}
 }
 ```
@@ -43,7 +44,8 @@ void loop()
 
 The serial protocol used between the Gateway and the Controller is a simple semicolon separated list of values. The last part of each "command" is the payload. All commands ends with a newline. The serial commands has the following format:
 
-node-id;child-sensor-id;message-type;ack;payload\n
+#####`S`:`node-id`;`child-sensor-id`;`sensor-type`;`sensor-name`\n
+#####`D`:`node-id`;`child-sensor-id`;`message-type`;`ack`;`payload`\n
 
 Message Part | Comment
 --- | ---
