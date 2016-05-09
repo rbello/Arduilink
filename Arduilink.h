@@ -54,6 +54,7 @@ public:
 
 	SensorItem* addSensor(unsigned int sensorId, SensorType type, const char* sensorName);
 	void setValue(unsigned int sensorId, const char* sensorValue);
+	void setValue(unsigned int sensorId, double sensorValue);
 	SensorItem* getSensor(unsigned int sensorId);
 	void printSensors();
 

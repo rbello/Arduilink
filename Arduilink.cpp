@@ -51,6 +51,11 @@ void Arduilink::setValue(unsigned int _id, const char* _value) {
 	serial(buff);
 }
 
+void Arduilink::setValue(unsigned int _id, double _value) {
+	char val[256];
+	sprintf(val, "%f", _value);
+	setValue(_id, val);
+}
 
 void Arduilink::printSensors() {
 	SensorItem* sensor = head;
