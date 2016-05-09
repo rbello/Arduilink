@@ -48,9 +48,10 @@ There are two types of frames which can be exchanged :
 - a frame describing available sensors,
 - a frame containing the payload (he message coming in from sensors or instruction going out)
 
-The last part of this "command" is the payload. All commands ends with a newline. The serial commands has the following format:
+The last part of this "command" is the payload. All commands ends with a newline.
 
 ##### Sensor presentation
+The serial commands has the following format:
 #####`S`:`node-id`;`child-sensor-id`;`sensor-type`;`sensor-name`\n
 
 Message Part | Comment
@@ -61,7 +62,8 @@ Message Part | Comment
 *sensor-name* | Name of the sensor
 
 ##### Data/instruction transfert
-#####`D`:`node-id`;`child-sensor-id`;`message-type`;`ack`;`payload`\n
+The serial commands has the following format:
+**`D`:`node-id`;`child-sensor-id`;`message-type`;`ack`;`payload`\n**
 
 Message Part | Comment
 --- | ---
