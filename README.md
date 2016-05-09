@@ -2,6 +2,8 @@
 
 A very simple system of communication between Arduino and Raspberry using the serial to collect data from several sensors.
 
+![Schematics](https://raw.githubusercontent.com/rbello/Arduilink/master/Drawing.jpg)
+
 ### Example
 
 ```c
@@ -41,7 +43,7 @@ The serial protocol used between the Gateway and the Controller is a simple semi
 
 There are two types of frames which can be exchanged :
 - a frame describing available sensors,
-- a frame containing the payload (he message coming in from sensors or instruction going out)
+- a frame containing the payload (the message coming in from sensors or instruction going out)
 
 The last part of this "command" is the payload. All commands ends with a newline.
 
