@@ -1,3 +1,4 @@
+#include <Arduino.h>
 
 // Type of sensor (used when presenting sensors)
 typedef enum  {
@@ -45,6 +46,7 @@ typedef struct SensorItem {
 	SensorType type;
 	const char* name;
 	const char* value;
+	void(*writter)(const char *msg);
 	SensorItem* next;
 };
 
@@ -53,10 +55,18 @@ public:
 	Arduilink(unsigned int nodeId);
 
 	SensorItem* addSensor(unsigned int sensorId, SensorType sensorType, const char* sensorName);
+	SensorItem* addSensor(unsigned int sensorId, SensorType sensorType, const char* sensorName, void(*_writter)(const char *msg));
+
+	SensorItem* getSensor(unsigned int sensorId);
+
 	void setValue(unsigned int sensorId, const char* sensorValue);
 	void setValue(unsigned int sensorId, double sensorValue);
-	SensorItem* getSensor(unsigned int sensorId);
+	
+	void send(unsigned int sensorId, String &msg);
+	void send(unsigned int sensorId, const char* msg);
+
 	void printSensors();
+	
 
 private:
 	unsigned int nodeId;

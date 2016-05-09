@@ -1,7 +1,6 @@
 #include <Arduilink.h>
 #include <stdio.h>
 #include <string.h>
-#include <Arduino.h>
 
 Arduilink::Arduilink(unsigned int _id) {
 	nodeId = _id;
@@ -9,14 +8,19 @@ Arduilink::Arduilink(unsigned int _id) {
 	sensorsCount = 0;
 }
 
-SensorItem* Arduilink::addSensor(unsigned int _id, SensorType type, const char* _name) {
+SensorItem* Arduilink::addSensor(unsigned int _id, SensorType _type, const char* _name) {
+	return addSensor(_id, _type, _name, 0);
+}
+
+SensorItem* Arduilink::addSensor(unsigned int _id, SensorType _type, const char* _name, void(*_writter)(const char *msg)) {
 	// Create sensor
 	SensorItem *sensor;
 	sensor = new SensorItem;
 	// Set sensor's attributes
 	sensor->id = _id;
 	sensor->name = _name;
-	sensor->type = type;
+	sensor->type = _type;
+	sensor->writter = _writter;
 	// Chained list
 	sensor->next = head;
 	head = sensor;
@@ -63,4 +67,17 @@ void Arduilink::printSensors() {
 		Serial.print(buff);
 		sensor = sensor->next;
 	}
+}
+
+void Arduilink::send(unsigned int _id, const char* _msg) {
+	SensorItem* sensor = getSensor(_id);
+	if (sensor == NULL) return; // TODO return error
+	if (sensor->writter != NULL)
+		sensor->writter(_msg);
+}
+
+void Arduilink::send(unsigned int sensorId, String &msg) {
+	char buf[msg.length() + 1];
+	msg.toCharArray(buf, msg.length() + 1);
+	send(sensorId, buf);
 }

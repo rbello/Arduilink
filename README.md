@@ -1,6 +1,6 @@
 # Arduilink
 
-A very simple system of communication between Arduino and Raspberry using the serial to collect data from several sensors
+A very simple system of communication between Arduino and Raspberry using the serial to collect data from several sensors.
 
 ### Example
 
@@ -11,13 +11,8 @@ A very simple system of communication between Arduino and Raspberry using the se
 // Unique identifier of the node
 #define NODE_ID 10
 
-// Output function
-void output(const char *string) {
-   Serial.print(string);
-}
-
 // Create the link
-Arduilink link = Arduilink(NODE_ID, output);
+Arduilink link = Arduilink(NODE_ID);
 
 // Setup function
 void setup()
