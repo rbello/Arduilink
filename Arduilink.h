@@ -50,17 +50,16 @@ typedef struct SensorItem {
 
 class Arduilink {
 public:
-	Arduilink(unsigned int nodeId, void(*serialStream)(const char *));
+	Arduilink(unsigned int nodeId);
 
-	SensorItem* addSensor(unsigned int sensorId, SensorType type, const char* sensorName);
+	SensorItem* addSensor(unsigned int sensorId, SensorType sensorType, const char* sensorName);
 	void setValue(unsigned int sensorId, const char* sensorValue);
 	void setValue(unsigned int sensorId, double sensorValue);
 	SensorItem* getSensor(unsigned int sensorId);
 	void printSensors();
 
 private:
-	unsigned int id;
-	void(*serial)(const char *msg);
+	unsigned int nodeId;
 	SensorItem *head;
 	SensorItem *queue;
 	int sensorsCount;
