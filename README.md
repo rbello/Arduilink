@@ -42,9 +42,25 @@ void loop()
 
 ### Serial Protocol
 
-The serial protocol used between the Gateway and the Controller is a simple semicolon separated list of values. The last part of each "command" is the payload. All commands ends with a newline. The serial commands has the following format:
+The serial protocol used between the Gateway and the Controller is a simple semicolon separated list of values.
 
+There are two types of frames which can be exchanged :
+- a frame describing available sensors,
+- a frame containing the payload (he message coming in from sensors or instruction going out)
+
+The last part of this "command" is the payload. All commands ends with a newline. The serial commands has the following format:
+
+##### Sensor presentation
 #####`S`:`node-id`;`child-sensor-id`;`sensor-type`;`sensor-name`\n
+
+Message Part | Comment
+--- | ---
+*node-id* | The unique id of the node that sends the message (address)
+*child-sensor-id* | Each node can have several sensors attached. This is the child-sensor-id that uniquely identifies one attached sensor
+*sensor-type* | Type of message sent - See table below
+*sensor-name* | Name of the sensor
+
+##### Data/instruction transfert
 #####`D`:`node-id`;`child-sensor-id`;`message-type`;`ack`;`payload`\n
 
 Message Part | Comment
