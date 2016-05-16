@@ -6,6 +6,10 @@
 #define PIN_433_EMITTER 10 // Pin de l'emetteur RF 433 Mhz
 #define PIN_DHT 7 // Pin pour la sonde DHT
 #define DELAY_UPDATE_DHT 10000 // En millisecondes
+#define PIN_PHOTO_CELL A0 // Pin du capteur de luminosité
+#define FLASH_SIMU_DELAY 150
+#define FLASH_DELTA_SENSIBILITY 20
+#define FLASH_DELTA_DELAY 150
 
 // Sensor RF 433Mhz
 RCSwitch rf433read = RCSwitch();
@@ -17,6 +21,7 @@ Arduilink lnk = Arduilink(10);
 // DHT Sensor
 dht DHT;
 
+// 
 void sendRf(const char* msg) {
   long data = String(msg).toInt();
   if (data > 0)
@@ -39,7 +44,7 @@ void sendRf(const char* msg) {
  */
 void setup()
 {
-  
+
   Serial.begin(115200); // bauds
   Serial.setTimeout(10); // milliseconds
 
@@ -50,20 +55,26 @@ void setup()
   rf433write.setPulseLength(320);
   rf433write.setProtocol(2);
 
-  lnk.addSensor(1, S_POWER, "EDF");
-  lnk.addSensor(2, S_CUSTOM, "RF433", sendRf);
+  // LED simulation compteur EDF
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+
+  lnk.addSensor(1,  S_POWER,  "EDF");
+  lnk.addSensor(2,  S_CUSTOM, "RF433", sendRf);
   lnk.addSensor(10, S_BINARY, "Prise Otio 1");
   lnk.addSensor(11, S_BINARY, "Prise Otio 2");
   lnk.addSensor(20, S_BINARY, "Interrupteur Optio 1");
   lnk.addSensor(30, S_BINARY, "Detecteur de porte Otio 1");
-  lnk.addSensor(40, S_TEMP, "Temperature sonde DHT");
-  lnk.addSensor(41, S_HUM, "Humidite sonde DHT");
+  lnk.addSensor(40, S_TEMP,   "Temperature sonde DHT");
+  lnk.addSensor(41, S_HUM,    "Humidite sonde DHT");
+  lnk.addSensor(50, S_POWER,  "Conso electrique EDF");
 
   Serial.println("A R D U I L I N K");
   Serial.println("~ Available sensors are:");
   lnk.printSensors();
   Serial.println("~ Available commands are: getsensors");
-  Serial.println("~ Everything else is parsed like an integer and sent thru RF 433MHz.");
+  Serial.println("~ Everything else is parsed like an integer and then sent through RF 433MHz.");
   
 }
 
@@ -75,10 +86,43 @@ void loop()
 
   Serial.println("Running...");
 
+  // Time stamp for DHT update
   unsigned long lastUpdateTimeDHT;
+  // Time stamp for flashing LED
+  unsigned long nextFlash = 0;
+  // Time stamp for power counter
+  unsigned long lastPowerHit = 0;
+  // Light measure
+  int lighValue = 0;
  
   while (1)
   {
+
+    // Flashing LED
+    // TODO Gerer la remise à zero de millis() tous les 50 jours
+    if (nextFlash < millis()) {
+      analogWrite(4, HIGH);
+      analogWrite(5, HIGH);
+      analogWrite(6, HIGH);
+      if (nextFlash + FLASH_SIMU_DELAY < millis()) {
+        analogWrite(4, LOW);
+        analogWrite(5, LOW);
+        analogWrite(6, LOW);
+        nextFlash = millis() + random(250, 4000);
+        Serial.println("Light");
+      }
+    }
+
+    // Ligh sensor
+    long delta = lighValue - analogRead(PIN_PHOTO_CELL);
+    if (abs(delta) > FLASH_DELTA_SENSIBILITY) {
+      // TODO Gerer la remise à zero de millis() tous les 50 jours
+      if (millis() - lastPowerHit > FLASH_DELTA_DELAY) {
+        lastPowerHit = millis();
+        lnk.setValue(50, "1WH");
+      }
+    }
+    lighValue = analogRead(PIN_PHOTO_CELL);
     
     // Read data from RF 433Mhz receiver
     if (rf433read.available())
