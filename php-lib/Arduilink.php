@@ -42,7 +42,7 @@ class Watcher {
 			list($nodeId, $sensorId,) = $tokens;
 			
 			// Sensors presentation
-			if ($opcode == "S:") {
+			if ($opcode == "S;") {
 				if (array_key_exists($sensorId, $this->sensors)) {
 					echo "Error: sensor allready exists: " . $this->sensors[$sensorId] . "\n";
 					continue;
@@ -54,7 +54,7 @@ class Watcher {
 			}
 			
 			// Data record
-			else if ($opcode == "D:") {
+			else if ($opcode == "D;") {
 				if (!array_key_exists($sensorId, $this->sensors)) {
 					echo "Warning: sensor $nodeId:$sensorId is not declared\n";
 					continue;
@@ -66,11 +66,31 @@ class Watcher {
 				$sensor = null;
 			}
 			
+			// Data record response
+			else if ($opcode == "V;") {
+				if (!array_key_exists($sensorId, $this->sensors)) {
+					echo "Warning: sensor $nodeId:$sensorId is not declared\n";
+					continue;
+				}
+				$sensor = $this->sensors[$sensorId];
+				$sensorType = $tokens[2];
+				$sensorName = $tokens[3];
+				$sensorValue = $sensor->setValue($tokens[4]);
+				
+				$this->notifyDataListeners($sensor, $sensorValue);
+				//echo "Value $sensor = $sensorValue\n";
+				$sensor = null;
+			}
+			
 		}
 		
 		fclose($handle);
 		return true;
 
+	}
+	
+	public static function getSensorInfo($sensorId) {
+		
 	}
 
 }

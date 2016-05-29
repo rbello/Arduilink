@@ -45,7 +45,7 @@ typedef struct SensorItem {
 	unsigned int id;
 	SensorType type;
 	const char* name;
-	const char* value;
+	String value;
 	void(*writter)(const char *msg);
 	SensorItem* next;
 };
@@ -68,6 +68,7 @@ public:
 	void setFailure(unsigned int sensorId, const char* msg);
 
 	void printSensors();
+	int handleInput();
 	
 
 private:
