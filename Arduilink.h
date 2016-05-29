@@ -65,6 +65,8 @@ public:
 	void send(unsigned int sensorId, String &msg);
 	void send(unsigned int sensorId, const char* msg);
 
+	void setFailure(unsigned int sensorId, const char* msg);
+
 	void printSensors();
 	
 

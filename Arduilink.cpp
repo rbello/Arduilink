@@ -48,7 +48,8 @@ void Arduilink::setValue(unsigned int _id, const char* _value) {
 	//if (strcmp(copy, sensor->value) == 0) return;
 	sensor->value = _value;
 	char buff[256];
-	sprintf(buff, "D:%d;%d;%s;%s\n", nodeId, _id, _value, sensor->name);
+	//sprintf(buff, "D:%d;%d;%s;%s\n", nodeId, _id, _value, sensor->name);
+	sprintf(buff, "D:%d;%d;%s\n", nodeId, _id, _value);
 	Serial.print(buff);
 }
 
@@ -80,4 +81,8 @@ void Arduilink::send(unsigned int sensorId, String &msg) {
 	char buf[msg.length() + 1];
 	msg.toCharArray(buf, msg.length() + 1);
 	send(sensorId, buf);
+}
+
+void Arduilink::setFailure(unsigned int sensorId, const char* msg) {
+
 }
