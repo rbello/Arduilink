@@ -9,6 +9,9 @@ $sensorId = $argv[1];
 
 include 'Arduilink.php';
 
-$sensor = Arduilink::getSensorInfo($sensorId);
+// On charge la configuration de la BDD
+include '../../../../core/config/common.config.php';
+
+$sensor = Arduilink\Arduilink::getSensorInfo($sensorId);
 
 ?>

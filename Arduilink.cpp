@@ -104,7 +104,8 @@ int Arduilink::handleInput() {
 		{
 			if (opcode == NULL) {
 				if (strcmp(pch, "G") != 0) {
-					Serial.println("Warning: invalid opcode");
+					Serial.print("Warning: invalid opcode ");
+					Serial.println(pch);
 					return 2;
 				}
 				opcode = pch;

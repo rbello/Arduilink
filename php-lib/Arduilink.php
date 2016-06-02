@@ -78,7 +78,7 @@ class Watcher {
 				$sensorValue = $sensor->setValue($tokens[4]);
 				
 				$this->notifyDataListeners($sensor, $sensorValue);
-				//echo "Value $sensor = $sensorValue\n";
+				echo "Value get $sensor = $sensorValue\n";
 				$sensor = null;
 			}
 			
@@ -88,11 +88,21 @@ class Watcher {
 		return true;
 
 	}
+
+}
+
+class Arduilink {
 	
 	public static function getSensorInfo($sensorId) {
-		
+		$handle = fopen("/dev/ttyUSB0", "rw");
+		fwrite($handle, "G;0;1\n");
+		flush($handle);
+		while (($line = fgets($handle)) !== false) {
+			echo $line;
+		}
+		fclose($handle);
 	}
-
+	
 }
 
 class Sensor {
