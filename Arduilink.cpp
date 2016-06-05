@@ -9,8 +9,9 @@ Arduilink::Arduilink(unsigned int _id) {
 }
 
 void Arduilink::init() {
-	Serial.print("ARDUILINK;V1.0;");
+	Serial.print("100 welcome arduilink-v1.0");
 	Serial.println(nodeId);
+	Serial.flush();
 	// Indique au client que l'arduino est prêt à fonctionner
 }
 
@@ -57,8 +58,9 @@ void Arduilink::setValue(unsigned int _id, const char* _value) {
 		//if (strncmp(_value, sensor->value, strlen(_value)) == 0) return;
 		//if (strcmp(copy, sensor->value) == 0) return;
 		char buff[256];
-		sprintf(buff, "D;%d;%d;%s\n", nodeId, _id, _value);
+		sprintf(buff, "200 data %d %d %s\n", nodeId, _id, _value);
 		Serial.print(buff);
+		Serial.flush();
 	}
 }
 
@@ -69,16 +71,21 @@ void Arduilink::setValue(unsigned int _id, double _value) {
 	setValue(_id, buf);
 }
 
+void Arduilink::printSensor(SensorItem* sensor, unsigned int _nodeId) {
+	char buff[256];
+	sprintf(buff, "300 desc sensor %d %d %d %d %s", _nodeId, sensor->id, sensor->type, sensor->verbose, sensor->name);
+	Serial.println(buff);
+}
+
 void Arduilink::printSensors() {
 	SensorItem* sensor = head;
 	while (sensor != NULL) {
-		char buff[256];
-		sprintf(buff, "S;%d;%d;%s;%d\n", nodeId, sensor->id, sensor->name, sensor->type);
-		Serial.print(buff);
+		printSensor(sensor, nodeId);
 		sensor = sensor->next;
 	}
 	// On ajoute une ligne vide pour signifier la fin
 	Serial.println();
+	Serial.flush();
 }
 
 void Arduilink::send(unsigned int _id, const char* _msg) {
@@ -111,16 +118,16 @@ int Arduilink::handleInput() {
 		int sensorId = -1;
 
 		char* pch;
-		pch = strtok(buf, ";");
+		pch = strtok(buf, " ");
 		while (pch != NULL)
 		{
 			if (opcode == NULL) {
-				if (strcmp(pch, "S") == 0) {
+				if (strcmp(pch, "present") == 0) {
 					printSensors();
 					return 0;
 				}
-				if (strcmp(pch, "G") != 0 && strcmp(pch, "I") != 0) {
-					Serial.print("Warning: invalid opcode ");
+				if (strcmp(pch, "get") != 0 && strcmp(pch, "info") != 0 && strcmp(pch, "set") != 0) {
+					Serial.print("400 invalid opcode ");
 					Serial.println(pch);
 					return 2;
 				}
@@ -131,8 +138,9 @@ int Arduilink::handleInput() {
 			}
 			else if (sensorId == -1) {
 				sensorId = atoi(pch);
+				break;
 			}
-			pch = strtok(NULL, ";");
+			pch = strtok(NULL, " ");
 		}
 
 		/*Serial.print("Opcode: ");
@@ -143,30 +151,55 @@ int Arduilink::handleInput() {
 		Serial.println(sensorId);*/
 
 		if (nodeId != node) {
-			Serial.print("Warning: no route found for node ");
+			Serial.print("404 notfound node ");
 			Serial.println(node);
 			return 3;
 		}
 
 		SensorItem* sensor = getSensor(sensorId);
 		if (sensor == NULL) {
-			Serial.print("Warning: sensor not found ");
+			Serial.print("404 notfound sensor ");
 			Serial.println(sensorId);
 			return 4;
 		}
 
 		// INFO - Récupérer la description d'un capteur
-		if (strcmp(opcode, "I") == 0) {
-			char buff[256];
-			sprintf(buff, "S;%d;%d;%s;%d", node, sensor->id, sensor->name, sensor->type);
-			Serial.println(buff);
+		if (strcmp(opcode, "info") == 0) {
+			printSensor(sensor, node);
+		}
+
+		// SET - Modifier un attribut d'un capteur
+		if (strcmp(opcode, "set") == 0) {
+			pch = strtok(NULL, " ");
+			if (strcmp(pch, "verbose") == 0) {
+				pch = strtok(NULL, " ");
+				if (strcmp(pch, "on") == 0) {
+					Serial.println("201 set on"); // TODO Ameliorable
+					Serial.flush();
+					sensor->verbose = true;
+				}
+				else if (strcmp(pch, "off") == 0) {
+					sensor->verbose = false;
+					Serial.println("201 set off"); // TODO Ameliorable
+					Serial.flush();
+				}
+				else {
+					Serial.print("400 invalid value ");
+					Serial.println(pch);
+					return 6;
+				}
+			}
+			else {
+				Serial.print("400 invalid option ");
+				Serial.println(pch);
+				return 5;
+			}
 		}
 
 		// GET - Récupérer la valeur d'un capteur
-		if (strcmp(opcode, "G") == 0) {
+		if (strcmp(opcode, "get") == 0) {
 			char buff[256];
-			//sprintf(buff, "V;%d;%d;%d;%s;", node, sensor->id, sensor->type, sensor->name);
-			sprintf(buff, "D;%d;%d;", node, sensor->id);
+			sprintf(buff, "200 data %d %d ", node, sensor->id);
 			Serial.print(buff);
 			Serial.println(sensor->value);
 		}

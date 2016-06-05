@@ -80,4 +80,6 @@ private:
 	SensorItem *queue;
 	int sensorsCount;
 
+	void printSensor(SensorItem* sensor, unsigned int nodeId);
+
 };
