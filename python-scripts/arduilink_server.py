@@ -58,15 +58,9 @@ halt = Event()
 ################### SERVER SOCKET
 #
 
-def start_server_socket(halt, port):
-	try:
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		sock.bind(('', port))
-		sock.listen(10)
-		print 'Socket: listening on port ' + str(port) + ' ...'
-	except socket.error as msg:
-		print 'Socket: bind failed -> ' + msg[1] + ' (' + str(msg[0]) + ')'
-		sys.exit(-3)
+def start_server_socket(halt, sock, port):
+	sock.listen(10)
+	print 'Socket: listening on port ' + port + ' ...'
 	while (not halt.is_set()) :
 		try:
 			conn, addr = sock.accept()
@@ -84,16 +78,25 @@ def start_server_socket(halt, port):
 #
 
 def start_client_socket(halt, conn, addr):
+	file = conn.makefile()
 	while (not halt.is_set()) :
-		data = conn.recv(1024)
+		data = file.readline()
 		if not data: break
+		toks = data.strip().split(' ')
+		if toks[0] == 'GET':
+			print 'Socket: request GET from ' + addr[0]
+			arduino.write('get ' + toks[1] + ' ' + toks[2])
+			line = arduino.readline()
+			conn.sendall(line.strip() + "\n")
+		else:
+			print 'Socket: invalid request from ' + addr[0]
 	print 'Socket: disconnected with ' + addr[0] + ':' + str(addr[1])
 	list.remove(conn)
 	conn.close()
 
 def broadcast_data(nodeId, sensorId, value):
 	for s in list:
-		s.send("DATA {0} {1} {2}".format(nodeId, sensorId, value))
+		s.send("DATA {0} {1} {2}\n".format(nodeId, sensorId, value))
 
 #	
 ################### ARDUINO SERIAL
@@ -101,21 +104,14 @@ def broadcast_data(nodeId, sensorId, value):
 
 def start_serial(halt, port, baudrate):
 	try:
-		print 'Serial: connecting ' + serialPort + ' at ' + serialBaudrate
-		#arduino = serial.Serial(serialPort, baudrate=serialBaudrate, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=1, xonxoff=0, rtscts=0)
-		arduino = serial.Serial(serialPort, serialBaudrate)
-		arduino.setDTR(False)
-		time.sleep(.1)
-		arduino.flushInput()
-		arduino.setDTR(True)
-		#print(arduino)
+		print 'Serial: connected on ' + serialPort + ' (' + serialBaudrate + ')'
 		# Welcome message
 		welcome = arduino.readline()
 		if welcome.startswith("100 ") == False:
 			print 'Serial: Invalid welcome message'
 			print welcome
 			arduino.close()
-			sys.exit(-2)
+			sys.exit(-4)
 		print 'Serial: device is ready'
 		# Get sensors configuration
 		arduino.write("present")
@@ -128,23 +124,24 @@ def start_serial(halt, port, baudrate):
 			else:
 				break
 		# Enable pooling
-		arduino.write("set 0 1 verbose on")
-		arduino.readline()
-		arduino.write("set 0 2 verbose on")
-		arduino.readline()
+		#arduino.write("set 0 1 verbose on")
+		#arduino.readline()
+		#arduino.write("set 0 2 verbose on")
+		#arduino.readline()
 		# Read next lines
-		while (not halt.is_set()) :
-			data = arduino.readline().strip()
-			if data.startswith("200 ") == True:
-				toks = data.split(" ")
-				broadcast_data(toks[2], toks[3], toks[4])
-			else:
-				print "Serial: received info -> " + data
+		while (not halt.is_set()):
+			time.sleep(.1)
+		#	data = arduino.readline().strip()
+		#	if data.startswith("200 ") == True:
+		#		toks = data.split(" ")
+		#		
+		#		#broadcast_data(toks[2], toks[3], toks[4])
+		#	else:
+		#		print "Serial: received info -> " + data
 	except BaseException as error:
-		print 'Serial: exception ', sys.exc_info()[0]
-		print str(error)
+		print 'Serial: error ', sys.exc_info()[0], str(error)
 		stop()
-		sys.exit(-2)
+		sys.exit(-3)
 
 #	
 ################### MAIN
@@ -158,18 +155,40 @@ def stop():
 	if arduino is not None: arduino.close()
 
 try:	
-	# Start server socket	
-	threadServer = Thread(target = start_server_socket, args = (halt, int(netPort), ))
+	
+	# Start server socket
+	try:
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.bind(('', int(netPort)))
+	except socket.error as msg:
+		print 'Socket: bind failed -> ' + msg[1] + ' (port: ' + netPort + ')'
+		sys.exit(-5)
+		
+	# Start serial 
+	try:
+		#arduino = serial.Serial(serialPort, baudrate=serialBaudrate, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=1, xonxoff=0, rtscts=0)
+		arduino = serial.Serial(serialPort, serialBaudrate)
+		arduino.setDTR(False)
+		time.sleep(.1)
+		arduino.flushInput()
+		arduino.setDTR(True)
+	except:
+		print 'Serial: bind failed -> '
+		sys.exit(-6)
+
+	# Create threads
+	threadServer = Thread(target = start_server_socket, args = (halt, sock, netPort, ))
 	threadServer.setDaemon(True)
-	threadServer.start()
-	# Start serial connection
 	threadSerial = Thread(target = start_serial, args = (halt, serialPort, int(serialBaudrate), ))
 	threadSerial.setDaemon(True)
+	
+	# Start threads
+	threadServer.start()
 	threadSerial.start()
-	# Join on server socket lifetime
-	while (threadServer.isAlive()): time.sleep(1)
-	sys.exit(0)
+	
+	# Join
+	while (not halt.is_set()): time.sleep(1)
 
 except KeyboardInterrupt:
 	stop()
-	sys.exit(-1)
+	sys.exit(-2)
