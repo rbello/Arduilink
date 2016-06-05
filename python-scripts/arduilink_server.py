@@ -84,16 +84,19 @@ def start_client_socket(halt, conn, addr):
 		data = file.readline()
 		if not data: break
 		toks = data.strip().split(' ')
-		if toks[0] == 'GET':
-			lock.acquire()
+		if len(toks) == 3 and toks[0] == 'GET':
 			print 'Socket: request GET from ' + addr[0] + ' sensor ' + toks[2]
-			arduino.write('get ' + toks[1] + ' ' + toks[2])
-			line = arduino.readline()
-			lock.release()
-			conn.sendall(line.strip() + "\n")
+			lock.acquire()
+			try:
+				arduino.write('get ' + toks[1] + ' ' + toks[2])
+				line = arduino.readline()
+				conn.sendall(line.strip() + "\n")
+			finally:
+				lock.release()
 			break
 		else:
 			print 'Socket: invalid request from ' + addr[0]
+			break
 	#print 'Socket: disconnected with ' + addr[0] + ':' + str(addr[1])
 	list.remove(conn)
 	conn.close()
