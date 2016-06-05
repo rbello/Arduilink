@@ -42,34 +42,31 @@ for opt, arg in opts:
 		getTarget = arg
 		continue
 
-sock = None
+if getTarget is None:
+	print 'Error: use -g or --get'
+	sys.exit(-3)
 
-def linesplit(socket):
-    buffer = socket.recv(256)
-    buffering = True
-    while buffering:
-        if "\n" in buffer:
-            (line, buffer) = buffer.split("\n", 1)
-            yield line + "\n"
-        else:
-            more = socket.recv(256)
-            if not more:
-                buffering = False
-            else:
-                buffer += more
-    if buffer:
-        yield buffer
+sock = None
 
 try:
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.connect(('127.0.0.1', int(netPort)))
-	sock.sendall("GET 0 2\r\n")
+	if ':' in getTarget:
+		nodeId, sensorId = getTarget.split(':', 2)
+	else:
+		nodeId = '0'
+		sensorId = getTarget
+	sock.sendall('GET ' + nodeId + ' ' + sensorId + "\r\n")
 	file = sock.makefile()
 	data = file.readline()
-	toks = data.strip().split(' ')
 	sock.close()
-	print toks[4]
-	sys.exit(0)
+	if data.startswith('200 ') == True:
+		toks = data.strip().split(' ')
+		print toks[4]
+		sys.exit(0)
+	else:
+		print 'Error:', data.strip()
+		sys.exit(-4)
 	
 except socket.error as e:
 	print 'Socket error:', str(e)

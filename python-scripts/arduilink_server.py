@@ -53,6 +53,7 @@ sock = None
 list = []
 arduino = None
 halt = Event()
+lock = Lock()
 
 #	
 ################### SERVER SOCKET
@@ -64,7 +65,7 @@ def start_server_socket(halt, sock, port):
 	while (not halt.is_set()) :
 		try:
 			conn, addr = sock.accept()
-			print 'Socket: connected with ' + addr[0] + ':' + str(addr[1])
+			#print 'Socket: connected with ' + addr[0] + ':' + str(addr[1])
 			list.append(conn)
 			clientThread = Thread(target = start_client_socket, args = (halt,conn,addr,))
 			clientThread.setDaemon(True)
@@ -84,20 +85,25 @@ def start_client_socket(halt, conn, addr):
 		if not data: break
 		toks = data.strip().split(' ')
 		if toks[0] == 'GET':
-			print 'Socket: request GET from ' + addr[0]
+			lock.acquire()
+			print 'Socket: request GET from ' + addr[0] + ' sensor ' + toks[2]
 			arduino.write('get ' + toks[1] + ' ' + toks[2])
 			line = arduino.readline()
+			lock.release()
 			conn.sendall(line.strip() + "\n")
+			break
 		else:
 			print 'Socket: invalid request from ' + addr[0]
-	print 'Socket: disconnected with ' + addr[0] + ':' + str(addr[1])
+	#print 'Socket: disconnected with ' + addr[0] + ':' + str(addr[1])
 	list.remove(conn)
 	conn.close()
 
 def broadcast_data(nodeId, sensorId, value):
 	for s in list:
-		s.send("DATA {0} {1} {2}\n".format(nodeId, sensorId, value))
-
+		try:
+			s.send("DATA {0} {1} {2}\n".format(nodeId, sensorId, value))
+		except:
+			continue
 #	
 ################### ARDUINO SERIAL
 #
