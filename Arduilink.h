@@ -46,6 +46,7 @@ typedef struct SensorItem {
 	SensorType type;
 	const char* name;
 	String value;
+	bool verbose;
 	void(*writter)(const char *msg);
 	SensorItem* next;
 };
@@ -53,6 +54,8 @@ typedef struct SensorItem {
 class Arduilink {
 public:
 	Arduilink(unsigned int nodeId);
+
+	void init();
 
 	SensorItem* addSensor(unsigned int sensorId, SensorType sensorType, const char* sensorName);
 	SensorItem* addSensor(unsigned int sensorId, SensorType sensorType, const char* sensorName, void(*_writter)(const char *msg));
