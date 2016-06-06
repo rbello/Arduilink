@@ -113,7 +113,7 @@ Finally, for each command, you can get 404 errors:
 You have to create sensors in the embedded arduino code, in the `setup` function. 
 
 ```c++
-public void Arduilink::addSensor(`uint id`, `uint flags`, `String description`, `String unit`);
+public void Arduilink::addSensor(uint id, uint flags, char* description, char* unit);
 ```
 
 The following flags are allowed:
@@ -125,7 +125,7 @@ Flag 				| Description                                                          
 *S_ACTION*			| The sensor is able to receive custom actions like switching on/off		| 4		|
 *S_BATTERY*			| The sensor is able to gather his own battery level						| 8		|
 
-Unit value is arbitrary, you must specify a coherent unit with respect to the measured physical quantity.
+Unit value is an arbitrary string; you must specify a coherent unit according to the measured physical quantity.
 
 Type 	 | Physical quantities 				| Units
 -------- | -------------------------------- | ---
