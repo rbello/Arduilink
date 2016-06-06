@@ -57,61 +57,75 @@ $ ./arduilink_client.py -p 777 -g 2
 
 ### Serial Protocol
 
-The serial protocol used between the Gateway and the Controller is a simple coma separated list of values.
+The serial protocol used between the Gateway and the Controller is a simple semicolon separated list of values.
 
 When you just get connected to serial link, the arduino will send a welcome message:
 
-#####`100`;<node-id>;Arduilink-v<protocol-version>\n
+#####`100`;`node-id`;`protocol-version`\n
 
 Then, the arduino can send a description of all connected sensors:
 
-#####`300`;<node-id>;<sensor-id>;<sensor-flags>;<sensor-type>;<sensor-verbose>;<sensor-name>\n
+#####`300`;`node-id`;`sensor-id`;`sensor-flags`;`sensor-type`;`sensor-verbose-attribute`;`sensor-name`\n
 
 Each time a sensor has a new value, the following is sent:
 
-#####`200`;<node-id>;<sensor-id>;<data-value>\n
+#####`200`;`node-id`;`sensor-id`;`data-value`\n
 
 ### Sending commands to arduino
 
 Ask the arduino to present all his sensors:
 
-#####PRESENT;<node-id>\n
+#####PRESENT;`node-id`\n
 
 Ask a description of a given sensor:
 
-#####`INFO`;<node-id>;<sensor-id>\n
+#####`INFO`;`node-id`;`sensor-id`\n
 
 Gather the value of a given sensor:
 
-#####`GET`;<node-id>;<sensor-id>\n
+#####`GET`;`node-id`;`sensor-id`\n
 
 Change an attribute of a given sensor:
 
-#####`SET`;<node-id>;<sensor-id>;<attribute-name>;<attribute-value>\n
+#####`SET`;`node-id`;`sensor-id`;`attribute-name`;`attribute-value`\n
 
-The arduino can answer with the following codes. If a SET command 
+The arduino can answer with the following codes. If a SET command is succesfull the response will be:
 
-#####`201`;<node-id>;<sensor-id>;<attribute>;<new-attribute-value>\n
-#####`400`;ATTRIBUTE;<invalid-attribute-name>;\n
-#####`400`;OPTION;<invalid-attribute-name>;<invalid-attribute-value>\n
-#####`404`;NODE;<node-id>\n
-#####`404`;SENSOR;<sensor-id>\n
+#####`201`;`node-id`;`sensor-id`;`attribute`;`new-attribute-value`\n
 
-Message Part | Comment
---- | ---
-*node-id* | The unique id of the node that sends the message (address)
-*child-sensor-id* | Each node can have several sensors attached. This is the child-sensor-id that uniquely identifies one attached sensor
-*message-type* | Type of message sent - See table below
-*payload* | The payload holds the message coming in from sensors or instruction going out to actuators.
+If an error occures, the following response can be returned if the attribute is not recognized:
+
+#####`400`;`ATTRIBUTE`;`invalid-attribute-name`;\n
+
+And the following if the attribute's value is not a valid option:
+
+#####`400`;`OPTION`;`invalid-attribute-name`;`invalid-attribute-value`\n
+
+Finally, for each command, you can get 404 errors:
+
+#####`404`;`NODE`;`node-id`\n
+#####`404`;`SENSOR`;`sensor-id`\n
+
+***
+
+### Creating sensors
+
+You have to create sensors in the embedded arduino code, in the `setup` function. 
+
+```c
+link.addSensor(`uint id`, `uint flags`, `string description`, `string unit`);
+```
+
+The following flags are allowed:
 
 Flag 				| Description                                                               | Value |
 ------------------- | ------------------------------------------------------------------------- | ----- |
-S_INFO				| The sensor is able to return a value (with GET action)					| 1		|
-S_HIT				| The sensor is able to send heartbeats each time a measure is recorded		| 2		|
-S_ACTION			| The sensor is able to receive actions like switching on/off				| 4		|
-S_BATTERY			| The sensor is able to gather his own battery level						| 8		|
+*S_INFO*			| The sensor is able to return a value (with GET action)					| 1		|
+*S_HIT*				| The sensor is able to send heartbeats each time a measure is recorded		| 2		|
+*S_ACTION*			| The sensor is able to receive actions like switching on/off				| 4		|
+*S_BATTERY*			| The sensor is able to gather his own battery level						| 8		|
 
-
+Unit value is arbitrary, you must specify a coherent unit with respect to the measured physical quantity.
 
 Type 	 | Physical quantities 				| Units
 -------- | -------------------------------- | ---
