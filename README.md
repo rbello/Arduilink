@@ -11,7 +11,7 @@ A very simple system of communication between Arduino and Raspberry using the se
 #include <Arduilink.h>
 
 // Unique identifier of the node
-#define NODE_ID 10
+#define NODE_ID 0
 
 // Create the link
 Arduilink link = Arduilink(NODE_ID);
@@ -19,48 +19,83 @@ Arduilink link = Arduilink(NODE_ID);
 // Setup function
 void setup()
 {
+	// Declare several sensors
 	link.addSensor(1, S_TEMP, "Temperature sensor (DHT)");
 	link.addSensor(2, S_HUM, "Humidity sensor (DHT)");
+	// Start serial link
+	Serial.begin(9600);
+	link.init();
 }
 
 // Loop function
 void loop()
 {
-	while (1)
-	{
-		link.setValue(1, mySensor.getTemperature());
-		link.setValue(2, mySensor.getHumidity());
-		sleep(5000);
-	}
+	link.setValue(1, mySensor.getTemperature());
+	link.setValue(2, mySensor.getHumidity());
+	sleep(5000);
 }
+
+// Serial events
+void serialEvent() {
+  lnk.handleInput();
+}
+```
+
+Once the Arduino is connected, the python service can be started . This server will connect permanently to the serial link, to be ready to read and write information to the Arduino. After starting the server, the client enables notably to gather the value of a sensor.
+
+```shell
+$ chmod 777 /dev/ttyUSB0
+$ ./arduilink_server.py -f /dev/ttyUSB0 -b 9600 -p 777 &
+Socket: listening on port 777 ...
+Serial: connected on /dev/ttyUSB0 (9600)
+Serial: device is ready
+$ ./arduilink_client.py -p 777 -g 2
+35.05
 ```
 
 ***
 
 ### Serial Protocol
 
-The serial protocol used between the Gateway and the Controller is a simple semicolon separated list of values.
+The serial protocol used between the Gateway and the Controller is a simple coma separated list of values.
 
-There are two types of frames which can be exchanged :
-- a frame describing available sensors,
-- a frame containing the payload (the message coming in from sensors or instruction going out)
+When you just get connected to serial link, the arduino will send a welcome message:
 
-The last part of this "command" is the payload. All commands ends with a newline.
+#####`100`;<node-id>;Arduilink-v<protocol-version>\n
 
-##### Sensor presentation
-The serial commands has the following format:
-#####`S`:`node-id`;`child-sensor-id`;`sensor-type`;`sensor-name`\n
+Then, the arduino can send a description of all connected sensors:
 
-Message Part | Comment
---- | ---
-*node-id* | The unique id of the node that sends the message (address)
-*child-sensor-id* | Each node can have several sensors attached. This is the child-sensor-id that uniquely identifies one attached sensor
-*sensor-type* | Type of message sent - See table below
-*sensor-name* | Name of the sensor
+#####`300`;<node-id>;<sensor-id>;<sensor-flags>;<sensor-type>;<sensor-verbose>;<sensor-name>\n
 
-##### Data/instruction transfert
-The serial commands has the following format:
-#####`D`:`node-id`;`child-sensor-id`;`message-type`;`ack`;`payload`\n
+Each time a sensor has a new value, the following is sent:
+
+#####`200`;<node-id>;<sensor-id>;<data-value>\n
+
+### Sending commands to arduino
+
+Ask the arduino to present all his sensors:
+
+#####PRESENT;<node-id>\n
+
+Ask a description of a given sensor:
+
+#####`INFO`;<node-id>;<sensor-id>\n
+
+Gather the value of a given sensor:
+
+#####`GET`;<node-id>;<sensor-id>\n
+
+Change an attribute of a given sensor:
+
+#####`SET`;<node-id>;<sensor-id>;<attribute-name>;<attribute-value>\n
+
+The arduino can answer with the following codes. If a SET command 
+
+#####`201`;<node-id>;<sensor-id>;<attribute>;<new-attribute-value>\n
+#####`400`;ATTRIBUTE;<invalid-attribute-name>;\n
+#####`400`;OPTION;<invalid-attribute-name>;<invalid-attribute-value>\n
+#####`404`;NODE;<node-id>\n
+#####`404`;SENSOR;<sensor-id>\n
 
 Message Part | Comment
 --- | ---
@@ -69,42 +104,41 @@ Message Part | Comment
 *message-type* | Type of message sent - See table below
 *payload* | The payload holds the message coming in from sensors or instruction going out to actuators.
 
-Type | Value | Comment | Unit
---- | --- | --- | ----
-S_DOOR | 0 | Door and window sensors | V_TRIPPED, V_ARMED
-S_MOTION | 1 | Motion sensors | V_TRIPPED, V_ARMED
-S_SMOKE | 2 | Smoke sensor | V_TRIPPED, V_ARMED
-S_LIGHT | 3 | Light Actuator (on/off) | V_STATUS (or V_LIGHT), V_WATT
-S_BINARY | 3 | Binary device (on/off), Alias for S_LIGHT  | V_STATUS (or V_LIGHT), V_WATT
-S_DIMMER | 4 | Dimmable device of some kind | V_STATUS (on/off), V_DIMMER (dimmer level 0-100), V_WATT
-S_COVER | 5 | Window covers or shades | V_UP, V_DOWN, V_STOP, V_PERCENTAGE
-S_TEMP | 6 | Temperature sensor | Temperature (degrees)
-S_HUM | 7 | Humidity sensor | Humidity percentage
-S_BARO | 8 | Barometer sensor (Pressure) | V_PRESSURE, V_FORECAST
-S_WIND | 9 | Wind sensor | V_WIND, V_GUST
-S_RAIN | 10 | Rain sensor | V_RAIN, V_RAINRATE
-S_UV | 11 | UV sensor | V_UV
-S_WEIGHT | 12 | Weight sensor for scales etc. | V_WEIGHT, V_IMPEDANCE
-S_POWER | 13 | Power measuring device, like power meters | V_WATT, V_KWH
-S_HEATER | 14 | Heater device | V_HVAC_SETPOINT_HEAT, V_HVAC_FLOW_STATE, V_TEMP
-S_DISTANCE | 15 | Distance sensor | V_DISTANCE, V_UNIT_PREFIX
-S_LIGHT_LEVEL | 16 | Light sensor | Lux
-S_ARDUINO_NODE | 17 | Arduino node device | 
-S_ARDUINO_REPEATER_NODE | 18 | Arduino repeating node device | 
-S_LOCK | 19 | Lock device | Lock status
-S_IR | 20 | Ir sender/receiver device | V_IR_SEND, V_IR_RECEIVE
-S_WATER | 21 | Water meter | V_FLOW, V_VOLUME
-S_AIR_QUALITY | 22 | Air quality sensor e.g. MQ-2 | V_LEVEL, V_UNIT_PREFIX
-S_CUSTOM | 23 | Use this for custom sensors where no other fits. | 
-S_DUST | 24 | Dust level sensor | V_LEVEL, V_UNIT_PREFIX
-S_SCENE_CONTROLLER | 25 | Scene controller device | V_SCENE_ON, V_SCENE_OFF
-S_RGB_LIGHT | 26 | RGB light | V_RGB, V_WATT
-S_RGBW_LIGHT | 27 | RGBW light (with separate white component) | V_RGBW, V_WATT
-S_COLOR_SENSOR | 28 | Color sensor | V_RGB
-S_HVAC | 29 | Thermostat/HVAC device | V_HVAC_SETPOINT_HEAT, V_HVAC_SETPOINT_COLD, V_HVAC_FLOW_STATE, V_HVAC_FLOW_MODE, V_HVAC_SPEED
-S_MULTIMETER | 30 | Multimeter device | V_VOLTAGE, V_CURRENT, V_IMPEDANCE
-S_SPRINKLER | 31 | Sprinkler device | V_STATUS (turn on/off), V_TRIPPED (if fire detecting device)
-S_WATER_LEAK | 32 | Water leak sensor | V_TRIPPED, V_ARMED
-S_SOUND | 33 | Sound sensor | V_LEVEL (in dB), V_TRIPPED, V_ARMED
-S_VIBRATION | 34 | Vibration sensor | V_LEVEL (vibration in Hz), V_TRIPPED, V_ARMED
-S_MOISTURE | 35 | Moisture sensor | V_LEVEL (water content or moisture in percentage?), V_TRIPPED, V_ARMED
+Flag 				| Description                                                               | Value |
+------------------- | ------------------------------------------------------------------------- | ----- |
+S_INFO				| The sensor is able to return a value (with GET action)					| 1		|
+S_HIT				| The sensor is able to send heartbeats each time a measure is recorded		| 2		|
+S_ACTION			| The sensor is able to receive actions like switching on/off				| 4		|
+S_BATTERY			| The sensor is able to gather his own battery level						| 8		|
+
+
+
+Type 	 | Physical quantities 				| Units
+-------- | -------------------------------- | ---
+Other	 | Aperture, hit, presence, state.. | boolean
+Base 	 | Length							| meter (m)
+Base 	 | Mass								| kilogram (kg)
+Base 	 | Time								| second (s)
+Base 	 | Temperature						| kelvin (K), degree celcius (C°)
+Base 	 | Amount of substance 				| mole (mol)
+Derived  | Luminous intensity  				| candela (cd)
+Derived  | Angle							| radian (rad), degrees (°)
+Derived  | Frequency						| hertz (Hz)
+Derived  | Force, weight					| newton (N)
+Derived  | Pressure, stress					| pascal (Pa)
+Derived  | Energy, work, heat 				| joule (J)
+Base 	 | Electric current					| ampere (A)
+Derived  | Electric power					| watt (W)
+Derived  | Electric charge					| coulomb (C)
+Derived  | Electric potential difference 	| volt (V)
+Derived  | Electric capacitance				| farad (F)
+Derived  | Electric resistance, impedance	| ohm
+Derived  | Electric conductance				| siemens (S)
+Derived  | Magnetic field					| weber (Wb)
+Derived  | Luminous flux					| lumen (lm)
+Derived  | Luminous intensity				| lux (lx)
+Derived  | Area								| length * length
+Derived	 | Volume							| length * length * length
+Derived  | Speed							| length / time
+Derived  | Angular moment					| mass / time / angle
+ ...	 | ...								| ...

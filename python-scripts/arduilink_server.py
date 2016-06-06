@@ -71,8 +71,8 @@ def start_server_socket(halt, sock, port):
 			clientThread.setDaemon(True)
 			clientThread.start()
 		except (SystemExit, KeyboardInterrupt):
-			sock.close()
 			break
+	sock.close()
 
 #	
 ################### CLIENT SOCKET
@@ -83,12 +83,12 @@ def start_client_socket(halt, conn, addr):
 	while (not halt.is_set()) :
 		data = file.readline()
 		if not data: break
-		toks = data.strip().split(' ')
+		toks = data.strip().split(';')
 		if len(toks) == 3 and toks[0] == 'GET':
 			print 'Socket: request GET from ' + addr[0] + ' sensor ' + toks[2]
 			lock.acquire()
 			try:
-				arduino.write('get ' + toks[1] + ' ' + toks[2])
+				arduino.write('GET;' + toks[1] + ';' + toks[2])
 				line = arduino.readline()
 				conn.sendall(line.strip() + "\n")
 			finally:
@@ -116,35 +116,29 @@ def start_serial(halt, port, baudrate):
 		print 'Serial: connected on ' + serialPort + ' (' + serialBaudrate + ')'
 		# Welcome message
 		welcome = arduino.readline()
-		if welcome.startswith("100 ") == False:
+		if welcome.startswith('100;') == False:
 			print 'Serial: Invalid welcome message'
 			print welcome
 			arduino.close()
 			sys.exit(-4)
 		print 'Serial: device is ready'
 		# Get sensors configuration
-		arduino.write("present")
+		arduino.write('PRESENT')
 		while 1:
 			data = arduino.readline().strip()
-			if data.startswith("300 ") == True:
-				toks = data.split(" ")
+			if data.startswith('300;') == True:
+				toks = data.split(';')
 				print 'Serial: new sensor'
 				print toks
 			else:
 				break
-		# Enable pooling
-		#arduino.write("set 0 1 verbose on")
-		#arduino.readline()
-		#arduino.write("set 0 2 verbose on")
-		#arduino.readline()
 		# Read next lines
 		while (not halt.is_set()):
 			time.sleep(.1)
 		#	data = arduino.readline().strip()
-		#	if data.startswith("200 ") == True:
-		#		toks = data.split(" ")
-		#		
-		#		#broadcast_data(toks[2], toks[3], toks[4])
+		#	if data.startswith('200;') == True:
+		#		toks = data.split(';')
+		#		#broadcast_data(toks[1], toks[2], toks[3])
 		#	else:
 		#		print "Serial: received info -> " + data
 	except BaseException as error:
