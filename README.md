@@ -6,7 +6,7 @@ A very simple system of communication between Arduino and Raspberry using the se
 
 ### Example
 
-```c
+```c++
 // Required library
 #include <Arduilink.h>
 
@@ -112,17 +112,17 @@ Finally, for each command, you can get 404 errors:
 
 You have to create sensors in the embedded arduino code, in the `setup` function. 
 
-```c
-link.addSensor(`uint id`, `uint flags`, `string description`, `string unit`);
+```c++
+public void Arduilink::addSensor(`uint id`, `uint flags`, `String description`, `String unit`);
 ```
 
 The following flags are allowed:
 
 Flag 				| Description                                                               | Value |
 ------------------- | ------------------------------------------------------------------------- | ----- |
-*S_INFO*			| The sensor is able to return a value (with GET action)					| 1		|
+*S_INFO*			| The sensor is able to return the current value (with GET action)			| 1		|
 *S_HIT*				| The sensor is able to send heartbeats each time a measure is recorded		| 2		|
-*S_ACTION*			| The sensor is able to receive actions like switching on/off				| 4		|
+*S_ACTION*			| The sensor is able to receive custom actions like switching on/off		| 4		|
 *S_BATTERY*			| The sensor is able to gather his own battery level						| 8		|
 
 Unit value is arbitrary, you must specify a coherent unit with respect to the measured physical quantity.
