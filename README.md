@@ -36,7 +36,8 @@ void loop()
 }
 
 // Serial events
-void serialEvent() {
+void serialEvent()
+{
   lnk.handleInput();
 }
 ```
@@ -44,8 +45,8 @@ void serialEvent() {
 Once the Arduino is connected, the python service can be started . This server will connect permanently to the serial link, to be ready to read and write information to the Arduino. After starting the server, the client enables notably to gather the value of a sensor.
 
 ```shell
-$ chmod 777 /dev/ttyUSB0
-$ ./arduilink_server.py -f /dev/ttyUSB0 -b 9600 -p 777 &
+$ sudo chmod 777 /dev/ttyUSB0
+$ sudo ./arduilink_server.py -f /dev/ttyUSB0 -b 9600 -p 777 &
 Socket: listening on port 777 ...
 Serial: connected on /dev/ttyUSB0 (9600)
 Serial: device is ready
