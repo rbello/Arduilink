@@ -75,7 +75,7 @@ Each time a sensor has a new value, the following is sent:
 
 Ask the arduino to present all his sensors:
 
-#####PRESENT;`node-id`\n
+#####`PRESENT`;`node-id`\n
 
 Ask a description of a given sensor:
 
@@ -129,7 +129,8 @@ Unit value is arbitrary, you must specify a coherent unit with respect to the me
 
 Type 	 | Physical quantities 				| Units
 -------- | -------------------------------- | ---
-Other	 | Aperture, hit, presence, state.. | boolean
+Other	 | Digital value (State) 			| boolean, unitless
+Other	 | Analogic value (Dimmer)			| numeric value, unitless
 Base 	 | Length							| meter (m)
 Base 	 | Mass								| kilogram (kg)
 Base 	 | Time								| second (s)
