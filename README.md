@@ -46,11 +46,11 @@ Once the Arduino is connected, the python service can be started . This server w
 
 ```shell
 $ sudo chmod 777 /dev/ttyUSB0
-$ sudo ./arduilink_server.py -f /dev/ttyUSB0 -b 9600 -p 777 &
-Socket: listening on port 777 ...
+$ sudo ./arduilink_server.py -f /dev/ttyUSB0 -b 9600 -p 900 &
+Socket: listening on port 900 ...
 Serial: connected on /dev/ttyUSB0 (9600)
 Serial: device is ready
-$ ./arduilink_client.py -p 777 -g 2
+$ ./arduilink_client.py -p 900 -g 2
 35.05
 ```
 
@@ -66,7 +66,7 @@ When you just get connected to serial link, the arduino will send a welcome mess
 
 Then, the arduino can send a description of all connected sensors:
 
-#####`300`;`node-id`;`sensor-id`;`sensor-flags`;`sensor-type`;`sensor-verbose-attribute`;`sensor-name`\n
+#####`300`;`node-id`;`sensor-id`;`sensor-flags`;`sensor-unit`;`sensor-verbose-attribute`;`sensor-name`\n
 
 Each time a sensor has a new value, the following is sent:
 
