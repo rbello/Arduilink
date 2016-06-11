@@ -20,8 +20,8 @@ Arduilink link = Arduilink(NODE_ID);
 void setup()
 {
 	// Declare several sensors
-	link.addSensor(1, S_TEMP, "Temperature sensor (DHT)");
-	link.addSensor(2, S_HUM, "Humidity sensor (DHT)");
+	link.addSensor(1, S_INFO, "Temperature sensor (DHT)", "°C");
+	link.addSensor(2, S_INFO, "Humidity sensor (DHT)", "%");
 	// Start serial link
 	Serial.begin(9600);
 	link.init();
