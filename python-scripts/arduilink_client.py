@@ -79,13 +79,14 @@ try:
 		file = sock.makefile()
 		while 1:
 			data = file.readline().strip()
-			print data
 			if runScript is not None:
 				try:
 					os.system(runScript + ' "' + data + '"')
 				except Exception as e:
 					print "Error: unable to run script,", e
 					sys.exit(-5)
+			else:
+				print data
 	else:
 		# Get one value
 		sock.sendall('GET;' + nodeId + ';' + sensorId + "\n")

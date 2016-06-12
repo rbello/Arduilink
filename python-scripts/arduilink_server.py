@@ -128,13 +128,17 @@ def start_client_socket(halt, conn, addr):
 
 def broadcast_data(nodeId, sensorId, value):
 	for socket in list:
-		
-		
-		
-		try:
-			socket.send("DATA;{0};{1};{2}\n".format(nodeId, sensorId, value))
-		except:
-			continue
+		addr = socket.getsockname()
+		key = addr[0] + ':' + str(addr[1]) + '=' + nodeId + ':' + sensorId
+		if key in watchs:
+			print 'Client ' + addr[0] + ':' + str(addr[1]) + ' is listening to ' + nodeId + ':' + sensorId
+			try:
+				socket.send("DATA;{0};{1};{2}\n".format(nodeId, sensorId, value))
+			except:
+				continue
+		else:
+			print 'Client ' + addr[0] + ':' + str(addr[1]) + ' is NOT listening to ' + nodeId + ':' + sensorId
+
 #	
 ################### ARDUINO SERIAL
 #

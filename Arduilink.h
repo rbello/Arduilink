@@ -95,6 +95,7 @@ private:
 	SensorItem *head;
 	SensorItem *queue;
 	int sensorsCount;
+	bool write;
 
 	void printSensor(SensorItem* sensor, unsigned int nodeId);
 

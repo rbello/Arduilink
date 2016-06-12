@@ -6,6 +6,7 @@ Arduilink::Arduilink(unsigned int _id) {
 	nodeId = _id;
 	head = queue = 0;
 	sensorsCount = 0;
+	write = false;
 }
 
 void Arduilink::init() {
@@ -61,8 +62,11 @@ void Arduilink::setValue(unsigned int _id, const char* _value) {
 		//if (strcmp(copy, sensor->value) == 0) return;
 		char buff[256];
 		sprintf(buff, "200;%d;%d;%s", nodeId, _id, _value);
+		while (write) {}
+		write = true;
 		Serial.println(buff);
 		Serial.flush();
+		write = false;
 	}
 }
 
@@ -109,8 +113,12 @@ void Arduilink::setFailure(unsigned int sensorId, const char* msg) {
 }
 
 int Arduilink::handleInput() {
+	
 	while (Serial.available() > 0) {
 		
+		while (write) {}
+		write = true;
+
 		String str = Serial.readString();
 
 		char buf[str.length() + 1];
@@ -127,11 +135,13 @@ int Arduilink::handleInput() {
 			if (opcode == NULL) {
 				if (strcmp(pch, "PRESENT") == 0) {
 					printSensors();
+					write = false;
 					return 0;
 				}
 				if (strcmp(pch, "GET") != 0 && strcmp(pch, "INFO") != 0 && strcmp(pch, "SET") != 0) {
 					Serial.print("400;OPCODE;");
 					Serial.println(pch);
+					write = false;
 					return 2;
 				}
 				opcode = pch;
@@ -156,6 +166,7 @@ int Arduilink::handleInput() {
 		if (nodeId != node) {
 			Serial.print("404;NODE;");
 			Serial.println(node);
+			write = false;
 			return 3;
 		}
 
@@ -163,6 +174,7 @@ int Arduilink::handleInput() {
 		if (sensor == NULL) {
 			Serial.print("404;SENSOR;");
 			Serial.println(sensorId);
+			write = false;
 			return 4;
 		}
 
@@ -189,12 +201,14 @@ int Arduilink::handleInput() {
 				else {
 					Serial.print("400;OPTION;VERBOSE;");
 					Serial.println(pch);
+					write = false;
 					return 6;
 				}
 			}
 			else {
 				Serial.print("400;ATTRIBUTE;");
 				Serial.println(pch);
+				write = false;
 				return 5;
 			}
 		}
@@ -208,7 +222,7 @@ int Arduilink::handleInput() {
 		}
 
 		Serial.flush();
-
+		write = false;
 		return 0;
 	}
 	return 1;

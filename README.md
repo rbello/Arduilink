@@ -20,8 +20,8 @@ Arduilink link = Arduilink(NODE_ID);
 void setup()
 {
 	// Declare several sensors
-	link.addSensor(1, S_INFO, "Temperature sensor (DHT)", "°C");
-	link.addSensor(2, S_INFO, "Humidity sensor (DHT)", "%");
+	link.addSensor(1, S_INFO, "Temperature sensor (DHT)", "celcius degree");
+	link.addSensor(2, S_INFO, "Humidity sensor (DHT)", "percent");
 	// Start serial link
 	Serial.begin(9600);
 	link.init();
@@ -46,11 +46,11 @@ Once the Arduino is connected, the python service can be started . This server w
 
 ```shell
 $ sudo chmod 777 /dev/ttyUSB0
-$ sudo ./arduilink_server.py -f /dev/ttyUSB0 -r 9600 -p 900 &
+$ sudo ./arduilink_server.py --file /dev/ttyUSB0 --rate 9600 --port 900 &
 Socket: listening on port 900 ...
 Serial: connected on /dev/ttyUSB0 (9600)
 Serial: device is ready
-$ ./arduilink_client.py -p 900 -g 2
+$ ./arduilink_client.py --port 900 --get 2
 35.05
 ```
 
