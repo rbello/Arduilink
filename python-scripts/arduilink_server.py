@@ -54,6 +54,7 @@ list = []
 arduino = None
 halt = Event()
 lock = Lock()
+watchs = []
 
 #	
 ################### SERVER SOCKET
@@ -84,8 +85,9 @@ def start_client_socket(halt, conn, addr):
 		data = file.readline()
 		if not data: break
 		toks = data.strip().split(';')
+		# Requête GET : on demande une valeur de capteur
 		if len(toks) == 3 and toks[0] == 'GET':
-			print 'Socket: request GET from ' + addr[0] + ' sensor ' + toks[2]
+			print 'Socket: request GET from ' + addr[0] + ':' + str(addr[1]) + ' sensor ' + toks[2]
 			lock.acquire()
 			try:
 				arduino.write('GET;' + toks[1] + ';' + toks[2])
@@ -94,17 +96,43 @@ def start_client_socket(halt, conn, addr):
 			finally:
 				lock.release()
 			break
+		elif len(toks) == 4 and toks[0] == 'WATCH':
+			print 'Socket: ' + ('remove ', 'add ')[toks[3] == '1'] + addr[0] + ':' + str(addr[1]) + ' in watch list for sensor ' + toks[2]
+			key = addr[0] + ':' + str(addr[1]) + '=' + toks[1] + ':' + toks[2]
+			if toks[3] == '1':
+				# Activation du mode verbose du capteur
+				#lock.acquire()
+				#try:
+				#	arduino.write('SET;' + toks[1] + ';' + toks[2] + ';VERBOSE;1')
+				#finally:
+				#	lock.release()
+				# Ajout du listener
+				watchs.append(key)
+			else:
+				# Suppression du listener
+				watchs.remove(key)
+				# TODO Retirer le mode verbose du capteur
 		else:
-			print 'Socket: invalid request from ' + addr[0]
+			print 'Socket: invalid request from ' + addr[0] + ':' + str(addr[1])
 			break
-	#print 'Socket: disconnected with ' + addr[0] + ':' + str(addr[1])
+	# Fin du socket client
+	print 'Socket: connexion closed ' + addr[0] + ':' + str(addr[1])
+	# Nettoyage des connexions actives
 	list.remove(conn)
+	# Nettoyage des watchers
+	k = addr[0] + ':' + str(addr[1]) + '='
+	for key in watchs:
+		if key.startswith(k): watchs.remove(key)
+	# Fermeture du socket
 	conn.close()
 
 def broadcast_data(nodeId, sensorId, value):
-	for s in list:
+	for socket in list:
+		
+		
+		
 		try:
-			s.send("DATA {0} {1} {2}\n".format(nodeId, sensorId, value))
+			socket.send("DATA;{0};{1};{2}\n".format(nodeId, sensorId, value))
 		except:
 			continue
 #	
@@ -114,14 +142,20 @@ def broadcast_data(nodeId, sensorId, value):
 def start_serial(halt, port, baudrate):
 	try:
 		print 'Serial: connected on ' + serialPort + ' (' + serialBaudrate + ')'
-		# Welcome message
-		welcome = arduino.readline()
-		if welcome.startswith('100;') == False:
-			print 'Serial: Invalid welcome message'
-			print welcome
+		
+		# Welcome sequence
+		ready = False
+		for i in range(1, 10):
+			welcome = arduino.readline()
+			if welcome.startswith('100;') == True:
+				print 'Serial: device is ready'
+				ready = True
+				break
+		if ready == False:
+			print 'Serial: Invalid welcome sequence'
 			arduino.close()
 			sys.exit(-4)
-		print 'Serial: device is ready'
+			
 		# Get sensors configuration
 		arduino.write('PRESENT')
 		while 1:
@@ -134,13 +168,13 @@ def start_serial(halt, port, baudrate):
 				break
 		# Read next lines
 		while (not halt.is_set()):
-			time.sleep(.1)
-		#	data = arduino.readline().strip()
-		#	if data.startswith('200;') == True:
-		#		toks = data.split(';')
-		#		#broadcast_data(toks[1], toks[2], toks[3])
-		#	else:
-		#		print "Serial: received info -> " + data
+			time.sleep(.01)
+			data = arduino.readline().strip()
+			if data.startswith('200;') == True:
+				toks = data.split(';')
+				broadcast_data(toks[1], toks[2], toks[3])
+			else:
+				print "Serial: received info -> " + data
 	except BaseException as error:
 		print 'Serial: error ', sys.exc_info()[0], str(error)
 		stop()

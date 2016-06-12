@@ -46,7 +46,7 @@ Once the Arduino is connected, the python service can be started . This server w
 
 ```shell
 $ sudo chmod 777 /dev/ttyUSB0
-$ sudo ./arduilink_server.py -f /dev/ttyUSB0 -b 9600 -p 900 &
+$ sudo ./arduilink_server.py -f /dev/ttyUSB0 -r 9600 -p 900 &
 Socket: listening on port 900 ...
 Serial: connected on /dev/ttyUSB0 (9600)
 Serial: device is ready

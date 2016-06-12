@@ -1,5 +1,10 @@
 #include <Arduino.h>
 
+#define S_INFO     1
+#define S_HIT      2
+#define S_ACTION   4
+#define S_BATTERY  8
+
 typedef struct SensorItem {
 	// Main attributes
 	unsigned int id;

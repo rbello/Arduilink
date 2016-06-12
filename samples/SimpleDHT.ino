@@ -1,7 +1,7 @@
 #include <dht.h>
 #include <Arduilink.h>
 
-#define DELAY_SLEEP 250 // En millisecondes
+#define DELAY_SLEEP 1000 // En millisecondes
 #define PIN_DHT 7 // Pin pour la sonde DHT
 
 dht DHT;
@@ -11,6 +11,9 @@ void setup() {
   lnk.addSensor(1, S_TEMP, "Temperature sensor (DHT)");
   lnk.addSensor(2, S_HUM, "Humidity sensor (DHT)");
   Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect
+  }
   lnk.init();
 }
 
@@ -36,3 +39,4 @@ void loop() {
 void serialEvent() {
   lnk.handleInput();
 }
+
