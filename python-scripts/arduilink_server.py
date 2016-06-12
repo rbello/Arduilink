@@ -97,15 +97,15 @@ def start_client_socket(halt, conn, addr):
 				lock.release()
 			break
 		elif len(toks) == 4 and toks[0] == 'WATCH':
-			print 'Socket: ' + ('remove ', 'add ')[toks[3] == '1'] + addr[0] + ':' + str(addr[1]) + ' in watch list for sensor ' + toks[2]
+			print 'Socket: ' + ('remove ', 'add ')[toks[3] == '1'] + addr[0] + ':' + str(addr[1]) + ' in watch list for sensor ' + toks[1] + ':' + toks[2]
 			key = addr[0] + ':' + str(addr[1]) + '=' + toks[1] + ':' + toks[2]
 			if toks[3] == '1':
 				# Activation du mode verbose du capteur
-				#lock.acquire()
-				#try:
-				#	arduino.write('SET;' + toks[1] + ';' + toks[2] + ';VERBOSE;1')
-				#finally:
-				#	lock.release()
+				lock.acquire()
+				try:
+					arduino.write('SET;' + toks[1] + ';' + toks[2] + ';VERBOSE;on')
+				finally:
+					lock.release()
 				# Ajout du listener
 				watchs.append(key)
 			else:
@@ -127,17 +127,14 @@ def start_client_socket(halt, conn, addr):
 	conn.close()
 
 def broadcast_data(nodeId, sensorId, value):
-	for socket in list:
-		addr = socket.getsockname()
+	for sock in list:
+		addr = sock.getpeername()
 		key = addr[0] + ':' + str(addr[1]) + '=' + nodeId + ':' + sensorId
 		if key in watchs:
-			print 'Client ' + addr[0] + ':' + str(addr[1]) + ' is listening to ' + nodeId + ':' + sensorId
 			try:
-				socket.send("DATA;{0};{1};{2}\n".format(nodeId, sensorId, value))
+				sock.send("DATA;{0};{1};{2}\n".format(nodeId, sensorId, value))
 			except:
 				continue
-		else:
-			print 'Client ' + addr[0] + ':' + str(addr[1]) + ' is NOT listening to ' + nodeId + ':' + sensorId
 
 #	
 ################### ARDUINO SERIAL
@@ -166,19 +163,20 @@ def start_serial(halt, port, baudrate):
 			data = arduino.readline().strip()
 			if data.startswith('300;') == True:
 				toks = data.split(';')
-				print 'Serial: new sensor'
-				print toks
+				print 'Serial: new sensor', toks
 			else:
 				break
 		# Read next lines
 		while (not halt.is_set()):
 			time.sleep(.01)
+			lock.acquire()
 			data = arduino.readline().strip()
 			if data.startswith('200;') == True:
 				toks = data.split(';')
 				broadcast_data(toks[1], toks[2], toks[3])
 			else:
 				print "Serial: received info -> " + data
+			lock.release()
 	except BaseException as error:
 		print 'Serial: error ', sys.exc_info()[0], str(error)
 		stop()
@@ -224,6 +222,7 @@ try:
 	threadSerial.setDaemon(True)
 	
 	# Start threads
+	print "Server running:", time.strftime("%c")
 	threadServer.start()
 	threadSerial.start()
 	

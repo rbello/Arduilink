@@ -1,6 +1,10 @@
 <?php
 
-list($opcode, $nodeId, $sensorId, $sensorValue) = explode(';', $argv[2], 4);
+if (sizeof($argv) < 3) return;
+
+list($opcode, $nodeId, $sensorId, $sensorValue) = @explode(';', $argv[2], 4);
+
+if (!isset($sensorValue)) return;
 
 require_once '../../../../core/php/core.inc.php';
 

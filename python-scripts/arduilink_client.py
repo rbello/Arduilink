@@ -97,6 +97,7 @@ try:
 			toks = data.strip().split(';')
 			# TODO vérifier nombre de tokens
 			print toks[3]
+			#print toks
 			sys.exit(0)
 		else:
 			print 'Error:', data.strip()
