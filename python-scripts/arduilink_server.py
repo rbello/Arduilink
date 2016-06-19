@@ -15,6 +15,7 @@ import getopt
 import sys
 import time
 import socket
+import time
 from threading import *
 
 # Default values
@@ -62,7 +63,7 @@ watchs = []
 
 def start_server_socket(halt, sock, port):
 	sock.listen(10)
-	print 'Socket: listening on port ' + port + ' ...'
+	print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: listening on port ' + port + ' ...'
 	while (not halt.is_set()) :
 		try:
 			conn, addr = sock.accept()
@@ -75,7 +76,7 @@ def start_server_socket(halt, sock, port):
 			break
 	sock.close()
 
-#	
+#
 ################### CLIENT SOCKET
 #
 
@@ -87,7 +88,7 @@ def start_client_socket(halt, conn, addr):
 		toks = data.strip().split(';')
 		# Requête GET : on demande une valeur de capteur
 		if len(toks) == 3 and toks[0] == 'GET':
-			print 'Socket: request GET from ' + addr[0] + ':' + str(addr[1]) + ' sensor ' + toks[2]
+			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: request GET from ' + addr[0] + ':' + str(addr[1]) + ' sensor ' + toks[2]
 			lock.acquire()
 			try:
 				arduino.write('GET;' + toks[1] + ';' + toks[2])
@@ -97,7 +98,7 @@ def start_client_socket(halt, conn, addr):
 				lock.release()
 			break
 		elif len(toks) == 4 and toks[0] == 'WATCH':
-			print 'Socket: ' + ('remove ', 'add ')[toks[3] == '1'] + addr[0] + ':' + str(addr[1]) + ' in watch list for sensor ' + toks[1] + ':' + toks[2]
+			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: ' + ('remove ', 'add ')[toks[3] == '1'] + addr[0] + ':' + str(addr[1]) + ' in watch list for sensor ' + toks[1] + ':' + toks[2]
 			key = addr[0] + ':' + str(addr[1]) + '=' + toks[1] + ':' + toks[2]
 			if toks[3] == '1':
 				# Activation du mode verbose du capteur
@@ -113,10 +114,10 @@ def start_client_socket(halt, conn, addr):
 				watchs.remove(key)
 				# TODO Retirer le mode verbose du capteur
 		else:
-			print 'Socket: invalid request from ' + addr[0] + ':' + str(addr[1])
+			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: invalid request from ' + addr[0] + ':' + str(addr[1])
 			break
 	# Fin du socket client
-	print 'Socket: connexion closed ' + addr[0] + ':' + str(addr[1])
+	print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: connexion closed ' + addr[0] + ':' + str(addr[1])
 	# Nettoyage des connexions actives
 	list.remove(conn)
 	# Nettoyage des watchers
@@ -142,18 +143,18 @@ def broadcast_data(nodeId, sensorId, value):
 
 def start_serial(halt, port, baudrate):
 	try:
-		print 'Serial: connected on ' + serialPort + ' (' + serialBaudrate + ')'
+		print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: connected on ' + serialPort + ' (' + serialBaudrate + ')'
 		
 		# Welcome sequence
 		ready = False
 		for i in range(1, 10):
 			welcome = arduino.readline()
 			if welcome.startswith('100;') == True:
-				print 'Serial: device is ready'
+				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: device is ready'
 				ready = True
 				break
 		if ready == False:
-			print 'Serial: Invalid welcome sequence'
+			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: Invalid welcome sequence'
 			arduino.close()
 			sys.exit(-4)
 			
@@ -163,7 +164,7 @@ def start_serial(halt, port, baudrate):
 			data = arduino.readline().strip()
 			if data.startswith('300;') == True:
 				toks = data.split(';')
-				print 'Serial: new sensor', toks
+				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: new sensor', toks
 			else:
 				break
 		# Read next lines
@@ -175,10 +176,10 @@ def start_serial(halt, port, baudrate):
 				toks = data.split(';')
 				broadcast_data(toks[1], toks[2], toks[3])
 			else:
-				print "Serial: received info -> " + data
+				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Serial: received info -> " + data
 			lock.release()
 	except BaseException as error:
-		print 'Serial: error ', sys.exc_info()[0], str(error)
+		print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: error ', sys.exc_info()[0], str(error)
 		stop()
 		sys.exit(-3)
 
@@ -187,7 +188,7 @@ def start_serial(halt, port, baudrate):
 #
 
 def stop():
-	print ' Server halted '
+	print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), ' Server halted '
 	halt.set()
 	for s in list: s.close()
 	if sock is not None: sock.close()
@@ -200,7 +201,7 @@ try:
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.bind(('', int(netPort)))
 	except socket.error as msg:
-		print 'Socket: bind failed -> ' + msg[1] + ' (port: ' + netPort + ')'
+		print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: bind failed -> ' + msg[1] + ' (port: ' + netPort + ')'
 		sys.exit(-5)
 		
 	# Start serial 
@@ -211,8 +212,8 @@ try:
 		time.sleep(.1)
 		arduino.flushInput()
 		arduino.setDTR(True)
-	except:
-		print 'Serial: bind failed -> '
+	except Exception as e:
+		print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: bind failed ->', e
 		sys.exit(-6)
 
 	# Create threads

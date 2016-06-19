@@ -16,16 +16,18 @@ import sys
 import time
 import socket
 import os
+import time
 
 # Default values
 netPort = '1000'
 getTarget = None
 watch = False
 runScript = None
+debug = False
 
 # Handle CLI arguments
 try:
-      opts, args = getopt.getopt(sys.argv[1:], 'hp:g:w:r:', ['help', 'port=', 'get=', 'watch=', 'run='])
+      opts, args = getopt.getopt(sys.argv[1:], 'hp:g:w:r:', ['help', 'port=', 'get=', 'watch=', 'run=', 'debug'])
 except getopt.GetoptError as err:
       print 'Error: ' + str(err)
       sys.exit(-1)
@@ -33,13 +35,14 @@ except getopt.GetoptError as err:
 # Configuration
 for opt, arg in opts:
 	if opt in ('-h', '--help'):
-		print 'arduilink_client.py [-p port] [-g sensor] [-w sensor] [-r command]'
+		print 'arduilink_client.py [--debug] [-p port] [-g sensor] [-w sensor] [-r command]'
 		print 'Options are:'
 		print ' --port or -p <port>			Change server socket port to connect.'
 		print ' --get or -g [node-id:]<sensor-id>	Get the current value of a given sensor.'
 		print ' --watch or -w [node-id:]<sensor-id>	Watch for data send from a given sensor.'
 		print ' --run or -r <command>			With watch mode, run the given command';
 		print '					each time a data was received.'
+		print ' --debug				Enable debug mode.'
 		sys.exit(0)
 	if opt in ('-p', '--port'):
 		netPort = arg
@@ -53,6 +56,9 @@ for opt, arg in opts:
 		continue
 	if opt in ('-r', '--run'):
 		runScript = arg
+		continue
+	if opt in ('--debug'):
+		debug = True
 		continue
 
 if getTarget is None:
@@ -70,12 +76,17 @@ else:
 
 try:
 	# Connexion au serveur
+	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Create socket"
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Connect to 127.0.0.1:" + netPort
 	sock.connect(('127.0.0.1', int(netPort)))
+	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Connected"
 	
 	if watch == True:
 		# Watching
+		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Send WATCH message"
 		sock.sendall('WATCH;' + nodeId + ';' + sensorId + ";1\n")
+		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Open file"
 		file = sock.makefile()
 		while 1:
 			data = file.readline().strip()
@@ -89,10 +100,15 @@ try:
 				print data
 	else:
 		# Get one value
+		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Send GET message"
 		sock.sendall('GET;' + nodeId + ';' + sensorId + "\n")
+		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Open file"
 		file = sock.makefile()
+		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Read next line"
 		data = file.readline()
+		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Close socket"
 		sock.close()
+		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Handle data:", data
 		if data.startswith('200;') == True:
 			toks = data.strip().split(';')
 			# TODO vérifier nombre de tokens
@@ -111,4 +127,5 @@ except KeyboardInterrupt:
 	sys.exit(-2)
 
 finally:
+	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "End"
 	if sock is not None: sock.close()
