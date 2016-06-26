@@ -43,6 +43,7 @@ for opt, arg in opts:
 		print ' --run or -r <command>			With watch mode, run the given command';
 		print '					each time a data was received.'
 		print ' --debug				Enable debug mode.'
+		#print ' --cmd <command>				Send a server command, like STOP.'
 		sys.exit(0)
 	if opt in ('-p', '--port'):
 		netPort = arg
@@ -76,17 +77,17 @@ else:
 
 try:
 	# Connexion au serveur
-	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Create socket"
+	if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Create socket"
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Connect to 127.0.0.1:" + netPort
+	if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Connect to 127.0.0.1:" + netPort
 	sock.connect(('127.0.0.1', int(netPort)))
-	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Connected"
+	if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Connected"
 	
 	if watch == True:
 		# Watching
-		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Send WATCH message"
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Send WATCH message"
 		sock.sendall('WATCH;' + nodeId + ';' + sensorId + ";1\n")
-		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Open file"
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Open file"
 		file = sock.makefile()
 		while 1:
 			data = file.readline().strip()
@@ -100,15 +101,15 @@ try:
 				print data
 	else:
 		# Get one value
-		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Send GET message"
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Send GET message"
 		sock.sendall('GET;' + nodeId + ';' + sensorId + "\n")
-		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Open file"
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Open file"
 		file = sock.makefile()
-		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Read next line"
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Read next line"
 		data = file.readline()
-		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Close socket"
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Close socket"
 		sock.close()
-		if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "Handle data:", data
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Handle data:", data
 		if data.startswith('200;') == True:
 			toks = data.strip().split(';')
 			# TODO vérifier nombre de tokens
@@ -127,5 +128,5 @@ except KeyboardInterrupt:
 	sys.exit(-2)
 
 finally:
-	if debug == True: print time.strftime("[%Y-%m-%d %H:%M:%S]", time.gmtime()), "End"
+	if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "End"
 	if sock is not None: sock.close()

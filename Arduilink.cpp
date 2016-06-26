@@ -205,6 +205,17 @@ int Arduilink::handleInput() {
 					return 6;
 				}
 			}
+			else if (strcmp(pch, "VALUE") == 0) {
+				pch = strtok(NULL, ";");
+				if (sensor->writter != NULL)
+					sensor->writter(pch);
+				else
+					sensor->value = pch;
+				Serial.print("201;ACK;");
+				Serial.print(node);
+				Serial.print(";");
+				Serial.println(sensor->id);
+			}
 			else {
 				Serial.print("400;ATTRIBUTE;");
 				Serial.println(pch);
