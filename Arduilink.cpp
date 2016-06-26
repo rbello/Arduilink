@@ -211,10 +211,10 @@ int Arduilink::handleInput() {
 					sensor->writter(pch);
 				else
 					sensor->value = pch;
-				Serial.print("201;ACK;");
-				Serial.print(node);
-				Serial.print(";");
-				Serial.println(sensor->id);
+				//Serial.print("201;ACK;");
+				//Serial.print(node);
+				//Serial.print(";");
+				//Serial.println(sensor->id);
 			}
 			else {
 				Serial.print("400;ATTRIBUTE;");

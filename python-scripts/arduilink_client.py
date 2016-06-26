@@ -23,11 +23,12 @@ netPort = '1000'
 target = None
 mode = None
 runScript = None
+value = None
 debug = False
 
 # Handle CLI arguments
 try:
-      opts, args = getopt.getopt(sys.argv[1:], 'hp:m:t;r:', ['help', 'port=', 'mode=', 'target=', 'run=', 'debug'])
+      opts, args = getopt.getopt(sys.argv[1:], 'hp:m:t:r:v:', ['help', 'port=', 'mode=', 'target=', 'run=', 'value=', 'debug'])
 except getopt.GetoptError as err:
       print 'Error: ' + str(err)
       sys.exit(-1)
@@ -38,8 +39,9 @@ for opt, arg in opts:
 		print 'arduilink_client.py [--debug] [-p port] [-m mode] [-t targetSensor] [-r command]'
 		print 'Options are:'
 		print ' --port or -p <port>			Change server socket port to connect.'
-		print ' --get or -g [node-id:]<sensor-id>	Get the current value of a given sensor.'
-		print ' --watch or -w [node-id:]<sensor-id>	Watch for data send from a given sensor.'
+		print ' --mode or -m			Get the current value of a given sensor.'
+		print ' --target or -t [node-id:]<sensor-id>	Watch for data send from a given sensor.'
+		print ' --value or -v			Value.'
 		print ' --run or -r <command>			With watch mode, run the given command';
 		print '					each time a data was received.'
 		print ' --debug				Enable debug mode.'
@@ -57,6 +59,9 @@ for opt, arg in opts:
 	if opt in ('-r', '--run'):
 		runScript = arg
 		continue
+	if opt in ('-v', '--value'):
+		value = arg
+		continue
 	if opt in ('--debug'):
 		debug = True
 		continue
@@ -69,6 +74,7 @@ if ':' in target:
 else:
 	nodeId = '0'
 	sensorId = target
+if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Target: node=", nodeId, "sensorId=", sensorId
 
 try:
 	# Connexion au serveur
@@ -79,19 +85,22 @@ try:
 	if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Connected"
 	
 	# Set value mode
-	if mode is 'set':
-		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Send SET-VALUE message"
-		sock.sendall('SET;' + nodeId + ';' + sensorId + ";VALUE;" + )
+	if mode == 'set':
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Send SET-VALUE with value", value
+		sock.sendall('SET;' + nodeId + ';' + sensorId + ";VALUE;0;" + value + "\n")
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Open file"
 		file = sock.makefile()
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Read next line"
 		data = file.readline()
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Handle data:", data
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Read next line"
+		data = file.readline()
+		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Handle data:", data
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Close socket"
 		sock.close()
-		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Handle data:", data
-	
+		
 	# Watch value mode
-	else if mode is 'watch':
+	elif mode == 'watch':
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Send WATCH message"
 		sock.sendall('WATCH;' + nodeId + ';' + sensorId + ";1\n")
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Open file"
@@ -108,7 +117,7 @@ try:
 				print data
 	
 	# Get value mode
-	else if mode is 'set':
+	elif mode == 'get':
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Send GET message"
 		sock.sendall('GET;' + nodeId + ';' + sensorId + "\n")
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Open file"
@@ -127,7 +136,7 @@ try:
 		else:
 			print 'Error:', data.strip()
 			sys.exit(-4)
-	else
+	else:
 		print 'Error: no valid mode', mode
 		sys.exit(-3)
 	

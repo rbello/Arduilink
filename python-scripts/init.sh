@@ -18,4 +18,5 @@ sudo ./arduilink_server.py --port 1008 > ./server.log &
 
 sleep 5
 
-sudo ./arduilink_client.py --port 1008 --m watch --target 1 -run "php ./jeedom_push.php 13" > ./client.log &
+# Capteur EDF arduino #1 vers jeedom ID #13
+sudo ./arduilink_client.py --port 1008 --mode watch --target 1 --run "php ./jeedom_push.php 13" > ./client.log &

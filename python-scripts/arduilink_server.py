@@ -22,10 +22,11 @@ from threading import *
 serialPort = '/dev/ttyUSB0'
 serialBaudrate = '9600'
 netPort = '1000'
+debug = False
 
 # Handle CLI arguments
 try:
-      opts, args = getopt.getopt(sys.argv[1:], 'hf:r:p:', ['help', 'file=', 'rate=', 'port='])
+      opts, args = getopt.getopt(sys.argv[1:], 'hf:r:p:', ['help', 'file=', 'rate=', 'port=', 'debug'])
 except getopt.GetoptError as err:
       print 'Error: ' + str(err)
       sys.exit(-1)
@@ -48,6 +49,10 @@ for opt, arg in opts:
 	if opt in ('-p', '--port'):
 		netPort = arg
 		continue
+	if opt in ('--debug'):
+		print "Debug=True"
+		debug = True
+		continue
 
 # Working vars
 sock = None
@@ -57,7 +62,7 @@ halt = Event()
 lock = Lock()
 watchs = []
 
-#	
+#
 ################### SERVER SOCKET
 #
 
@@ -88,15 +93,42 @@ def start_client_socket(halt, conn, addr):
 		toks = data.strip().split(';')
 		# Requête GET : on demande une valeur de capteur
 		if len(toks) == 3 and toks[0] == 'GET':
-			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: request GET from ' + addr[0] + ':' + str(addr[1]) + ' sensor ' + toks[2]
+			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: request=GET from=' + addr[0] + ':' + str(addr[1]) + ' sensor=' + toks[2]
 			lock.acquire()
 			try:
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Write to arduino"
 				arduino.write('GET;' + toks[1] + ';' + toks[2])
-				line = arduino.readline()
+				arduino.flush()
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Read from arduino"
+				line = ''
+				while line == '': line = arduino.readline()
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Answer to socket: ", line.strip()
 				conn.sendall(line.strip() + "\n")
 			finally:
 				lock.release()
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Finished"
 			break
+			
+		# Requête SET : on écrit une valeur sur un capteur
+		if len(toks) == 6 and toks[0] == 'SET':
+			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: request=SET from=' + addr[0] + ':' + str(addr[1]) + ' sensor=' + toks[2] + ' attr=' + toks[3] + ' ack=' + toks[4] + ' value=' + toks[5]
+			lock.acquire()
+			try:
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Write to arduino"
+				# TODO ACK
+				#arduino.write('SET;' + toks[1] + ';' + toks[2] + ';VALUE;' + toks[3] + ';' + toks[4])
+				arduino.write('SET;' + toks[1] + ';' + toks[2] + ';' + toks[3] + ';' + toks[4])
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Read from arduino"
+				line = ''
+				while line == '': line = arduino.readline()
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Answer to socket: ", line.strip()
+				conn.sendall(line.strip() + "\n")
+			finally:
+				lock.release()
+				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Finished"
+			break
+			
+		# Requête WATCH : on observe un sensor
 		elif len(toks) == 4 and toks[0] == 'WATCH':
 			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: ' + ('remove ', 'add ')[toks[3] == '1'] + addr[0] + ':' + str(addr[1]) + ' in watch list for sensor ' + toks[1] + ':' + toks[2]
 			key = addr[0] + ':' + str(addr[1]) + '=' + toks[1] + ':' + toks[2]
@@ -160,21 +192,24 @@ def start_serial(halt, port, baudrate):
 			
 		# Get sensors configuration
 		arduino.write('PRESENT')
-		while 1:
-			data = arduino.readline().strip()
-			if data.startswith('300;') == True:
-				toks = data.split(';')
-				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: new sensor', toks
-			else:
-				break
+
 		# Read next lines
 		while (not halt.is_set()):
 			time.sleep(.01)
 			lock.acquire()
 			data = arduino.readline().strip()
-			if data.startswith('200;') == True:
+			if data == '':
+				lock.release()
+				continue;
+			if data.startswith('300;') == True:
 				toks = data.split(';')
-				broadcast_data(toks[1], toks[2], toks[3])
+				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: new sensor', toks
+			elif data.startswith('200;') == True:
+				toks = data.split(';')
+				try:
+					broadcast_data(toks[1], toks[2], toks[3])
+				except Exception as e:
+					print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Serial: error on broadcast,", e
 			else:
 				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Serial: received info -> " + data
 			lock.release()
@@ -189,6 +224,7 @@ def start_serial(halt, port, baudrate):
 
 def stop():
 	print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), ' Server halted '
+	lock.release()
 	halt.set()
 	for s in list: s.close()
 	if sock is not None: sock.close()
@@ -207,7 +243,7 @@ try:
 	# Start serial 
 	try:
 		#arduino = serial.Serial(serialPort, baudrate=serialBaudrate, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=1, xonxoff=0, rtscts=0)
-		arduino = serial.Serial(serialPort, serialBaudrate)
+		arduino = serial.Serial(serialPort, serialBaudrate, timeout = 1)
 		arduino.setDTR(False)
 		time.sleep(.1)
 		arduino.flushInput()
