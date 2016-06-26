@@ -14,8 +14,8 @@ cd /var/www/html/plugins/script/core/ressources
 sudo rm server.log
 sudo rm client.log
 
-sudo ./arduilink_server.py -p 1008 > ./server.log &
+sudo ./arduilink_server.py --port 1008 > ./server.log &
 
-sleep 6
+sleep 5
 
-sudo ./arduilink_client.py -p 1008 -w 1 -r "php ./jeedom_push.php 13" > ./client.log &
+sudo ./arduilink_client.py --port 1008 --m watch --target 1 -run "php ./jeedom_push.php 13" > ./client.log &
