@@ -77,6 +77,13 @@ void Arduilink::setValue(unsigned int _id, double _value) {
 	setValue(_id, buf);
 }
 
+void Arduilink::setValue(unsigned int _id, unsigned long _value) {
+	String val = String(_value);
+	char buf[val.length() + 1];
+	val.toCharArray(buf, val.length() + 1);
+	setValue(_id, buf);
+}
+
 void Arduilink::printSensor(SensorItem* sensor, unsigned int _nodeId) {
 	char buff[256];
 	sprintf(buff, "300;%d;%d;%d;%d;%d;%s", _nodeId, sensor->id, sensor->flags, sensor->unit, sensor->verbose, sensor->name);
@@ -183,53 +190,75 @@ int Arduilink::handleInput() {
 			printSensor(sensor, node);
 		}
 
-		// SET - Modifier un attribut d'un capteur
-		if (strcmp(opcode, "SET") == 0) {
-			pch = strtok(NULL, ";");
-			if (strcmp(pch, "VERBOSE") == 0) {
-				pch = strtok(NULL, ";");
-				if (strcmp(pch, "on") == 0) {
-					Serial.println("201;VERBOSE;1"); // TODO Ameliorable
-					Serial.flush();
-					sensor->verbose = true;
-				}
-				else if (strcmp(pch, "off") == 0) {
-					sensor->verbose = false;
-					Serial.println("201;VERBOSE;0"); // TODO Ameliorable
-					Serial.flush();
-				}
-				else {
-					Serial.print("400;OPTION;VERBOSE;");
-					Serial.println(pch);
-					write = false;
-					return 6;
-				}
-			}
-			else if (strcmp(pch, "VALUE") == 0) {
-				pch = strtok(NULL, ";");
-				if (sensor->writter != NULL)
-					sensor->writter(pch);
-				else
-					sensor->value = pch;
-				//Serial.print("201;ACK;");
-				//Serial.print(node);
-				//Serial.print(";");
-				//Serial.println(sensor->id);
-			}
-			else {
-				Serial.print("400;ATTRIBUTE;");
-				Serial.println(pch);
-				write = false;
-				return 5;
-			}
-		}
-
 		// GET - Récupérer la valeur d'un capteur
 		if (strcmp(opcode, "GET") == 0) {
 			char buff[256];
 			sprintf(buff, "200;%d;%d;", node, sensor->id);
 			Serial.print(buff);
 			Serial.println(sensor->value);
+		}
+
+		// SET - Modifier un attribut d'un capteur
+		else if (strcmp(opcode, "SET") == 0) {
+			
+			// Choose attribute mode
+			pch = strtok(NULL, ";");
+			int mode = 0;
+			if (strcmp(pch, "VERBOSE") == 0) mode = 1;
+			else if (strcmp(pch, "VAL") == 0) mode = 2;
+			else {
+				Serial.print("400;ATTR;");
+				Serial.println(pch);
+				write = false;
+				return 5;
+			}
+
+			// Ack
+			pch = strtok(NULL, ";");
+			bool ack = strcmp(pch, "1") == 0;
+			
+			// Value
+			pch = strtok(NULL, ";");
+
+			// Handle Set Verbose
+			if (mode == 1) {
+				if (strcmp(pch, "1") == 0) {
+					if (ack) {
+						Serial.println("201;VERBOSE;1");
+						Serial.flush();
+					}
+					sensor->verbose = true;
+				}
+				else if (strcmp(pch, "0") == 0) {
+					sensor->verbose = false;
+					if (ack) {
+						Serial.println("201;VERBOSE;0"); // TODO Ameliorer avec ids
+						Serial.flush();
+					}
+				}
+				else {
+					Serial.print("400;OPT;VERBOSE;"); // TODO Ameliorer avec ids
+					Serial.println(pch);
+					write = false;
+					return 6;
+				}
+			}
+
+			// Handle Set Value
+			else if (mode == 2) {
+				sensor->value = pch;
+				if (sensor->writter != NULL)
+					sensor->writter(pch);
+				if (ack) {
+					Serial.print("201;SET;");
+					Serial.print(node);
+					Serial.print(";");
+					Serial.print(sensor->id);
+					Serial.print(";VAL;");
+					Serial.println(pch);
+				}
+			}
+			
 		}
 
 		Serial.flush();

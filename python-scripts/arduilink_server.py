@@ -91,43 +91,49 @@ def start_client_socket(halt, conn, addr):
 		data = file.readline()
 		if not data: break
 		toks = data.strip().split(';')
+		
 		# Requête GET : on demande une valeur de capteur
 		if len(toks) == 3 and toks[0] == 'GET':
 			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: request=GET from=' + addr[0] + ':' + str(addr[1]) + ' sensor=' + toks[2]
 			lock.acquire()
 			try:
+				# Write the request to the arduino
 				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Write to arduino"
 				arduino.write('GET;' + toks[1] + ';' + toks[2])
 				arduino.flush()
+				# Read the answer
 				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Read from arduino"
 				line = ''
 				while line == '': line = arduino.readline()
+				# Write-back answer to client's socket
 				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Answer to socket: ", line.strip()
 				conn.sendall(line.strip() + "\n")
 			finally:
 				lock.release()
 				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Finished"
-			break
+			break # Operation is done, close the socket
 			
 		# Requête SET : on écrit une valeur sur un capteur
 		if len(toks) == 6 and toks[0] == 'SET':
 			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: request=SET from=' + addr[0] + ':' + str(addr[1]) + ' sensor=' + toks[2] + ' attr=' + toks[3] + ' ack=' + toks[4] + ' value=' + toks[5]
 			lock.acquire()
 			try:
+				# Write the request to the arduino
 				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Write to arduino"
-				# TODO ACK
-				#arduino.write('SET;' + toks[1] + ';' + toks[2] + ';VALUE;' + toks[3] + ';' + toks[4])
-				arduino.write('SET;' + toks[1] + ';' + toks[2] + ';' + toks[3] + ';' + toks[4])
-				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Read from arduino"
-				line = ''
-				while line == '': line = arduino.readline()
-				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Answer to socket: ", line.strip()
-				conn.sendall(line.strip() + "\n")
+				arduino.write('SET;' + toks[1] + ';' + toks[2] + ';' + toks[3] + ';' + toks[4] + ';' + toks[5])
+				arduino.flush()
+				# Read the answer (if ACK is required)
+				if toks[4] == '1':
+					if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Read from arduino"
+					line = ''
+					while line == '': line = arduino.readline()
+					if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Answer to socket:", line.strip()
+					conn.sendall(line.strip() + "\n")
 			finally:
 				lock.release()
 				if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "	Finished"
-			break
-			
+			break # Operation is done, close the socket
+
 		# Requête WATCH : on observe un sensor
 		elif len(toks) == 4 and toks[0] == 'WATCH':
 			print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Socket: ' + ('remove ', 'add ')[toks[3] == '1'] + addr[0] + ':' + str(addr[1]) + ' in watch list for sensor ' + toks[1] + ':' + toks[2]
@@ -136,7 +142,7 @@ def start_client_socket(halt, conn, addr):
 				# Activation du mode verbose du capteur
 				lock.acquire()
 				try:
-					arduino.write('SET;' + toks[1] + ';' + toks[2] + ';VERBOSE;on')
+					arduino.write('SET;' + toks[1] + ';' + toks[2] + ';VERBOSE;1')
 				finally:
 					lock.release()
 				# Ajout du listener

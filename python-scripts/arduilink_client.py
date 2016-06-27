@@ -87,7 +87,7 @@ try:
 	# Set value mode
 	if mode == 'set':
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Send SET-VALUE with value", value
-		sock.sendall('SET;' + nodeId + ';' + sensorId + ";VALUE;0;" + value + "\n")
+		sock.sendall('SET;' + nodeId + ';' + sensorId + ";VAL;0;" + value + "\n") # TODO ACK
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Open file"
 		file = sock.makefile()
 		if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Read next line"

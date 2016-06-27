@@ -88,7 +88,7 @@ Gather the value of a given sensor:
 
 Change an attribute of a given sensor:
 
-#####`SET`;`node-id`;`sensor-id`;`attribute-name`;`attribute-value`\n
+#####`SET`;`node-id`;`sensor-id`;`attribute-name`;`ack`;`attribute-value`\n
 
 The arduino can answer with the following codes. If a SET command is succesfull the response will be:
 
@@ -96,11 +96,11 @@ The arduino can answer with the following codes. If a SET command is succesfull 
 
 If an error occures, the following response can be returned if the attribute is not recognized:
 
-#####`400`;`ATTRIBUTE`;`invalid-attribute-name`;\n
+#####`400`;`ATTR`;`invalid-attribute-name`;\n
 
 And the following if the attribute's value is not a valid option:
 
-#####`400`;`OPTION`;`invalid-attribute-name`;`invalid-attribute-value`\n
+#####`400`;`OPT`;`invalid-attribute-name`;`invalid-attribute-value`\n
 
 Finally, for each command, you can get 404 errors:
 

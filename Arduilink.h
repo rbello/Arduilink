@@ -53,9 +53,14 @@ public:
 	void setValue(unsigned int sensorId, const char* sensorValue);
 
 	/**
-	 * Update the current value of a sensor.
-	 */
+	* Update the current value of a sensor.
+	*/
 	void setValue(unsigned int sensorId, double sensorValue);
+
+	/**
+	* Update the current value of a sensor.
+	*/
+	void setValue(unsigned int sensorId, unsigned long sensorValue);
 	
 	/**
 	 * Send an operation to a sensor.
