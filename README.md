@@ -2,7 +2,7 @@
 
 A very simple system of communication between Arduino and Raspberry using the serial to collect data from several sensors.
 
-![Schematics](https://raw.githubusercontent.com/rbello/Arduilink/master/Drawing.jpg)
+![Schematics](https://raw.githubusercontent.com/rbello/Arduilink/master/doc/Drawing.jpg)
 
 ### Example
 
@@ -158,3 +158,5 @@ Derived	 | Volume							| length * length * length
 Derived  | Speed							| length / time
 Derived  | Angular moment					| mass / time / angle
  ...	 | ...								| ...
+ 
+ ![Sequence](https://raw.githubusercontent.com/rbello/Arduilink/master/doc/SequenceDiagram.png)
