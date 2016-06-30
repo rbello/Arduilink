@@ -32,7 +32,6 @@ void sendRf433(const char* msg) {
   {
     // Send to RF 433Mhz emitter
     rf433write.send(data, 32);
-    rf433write.send(data, 32);
     //rf433write.switchOn("11111", "00010"); // DIP
     //rf433write.send(5393, 24); // Decimal
     //rf433write.send("000000000001010100010001"); // Binary
@@ -126,6 +125,16 @@ void loop()
         rf433read.resetAvailable();
         continue; // Error
       }
+      
+      /*Serial.print("Value=");
+      Serial.print(rf433read.getReceivedValue());
+      Serial.print(" Length=");
+      Serial.print(rf433read.getReceivedBitlength());
+      Serial.print(" Delay=");
+      Serial.print(rf433read.getReceivedDelay());
+      Serial.print(" Protocol=");
+      Serial.println(rf433read.getReceivedProtocol());*/
+
       lnk.setValue(4, value);
       rf433read.resetAvailable();
     }
