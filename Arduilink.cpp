@@ -52,9 +52,9 @@ SensorItem* Arduilink::getSensor(unsigned int _id) {
 	return sensor;
 }
 
-void Arduilink::setValue(unsigned int _id, const char* _value) {
+SensorItem* Arduilink::setValue(unsigned int _id, const char* _value) {
 	SensorItem* sensor = getSensor(_id);
-	if (sensor == NULL) return; // TODO Debug
+	if (sensor == NULL) return NULL; // TODO Debug
 	sensor->value = String(_value);
 	// Auto-ouput (verbose mode)
 	if (sensor->verbose == true) {
@@ -68,20 +68,21 @@ void Arduilink::setValue(unsigned int _id, const char* _value) {
 		Serial.flush();
 		write = false;
 	}
+	return sensor;
 }
 
-void Arduilink::setValue(unsigned int _id, double _value) {
+SensorItem* Arduilink::setValue(unsigned int _id, double _value) {
 	String val = String(_value);
 	char buf[val.length() + 1];
 	val.toCharArray(buf, val.length() + 1);
-	setValue(_id, buf);
+	return setValue(_id, buf);
 }
 
-void Arduilink::setValue(unsigned int _id, unsigned long _value) {
+SensorItem* Arduilink::setValue(unsigned int _id, unsigned long _value) {
 	String val = String(_value);
 	char buf[val.length() + 1];
 	val.toCharArray(buf, val.length() + 1);
-	setValue(_id, buf);
+	return setValue(_id, buf);
 }
 
 void Arduilink::printSensor(SensorItem* sensor, unsigned int _nodeId) {
@@ -109,14 +110,20 @@ void Arduilink::send(unsigned int _id, const char* _msg) {
 	// TODO else return warning
 }
 
-void Arduilink::send(unsigned int sensorId, String &msg) {
-	char buf[msg.length() + 1];
-	msg.toCharArray(buf, msg.length() + 1);
-	send(sensorId, buf);
+void Arduilink::send(unsigned int _id, String &_msg) {
+	char buf[_msg.length() + 1];
+	_msg.toCharArray(buf, _msg.length() + 1);
+	send(_id, buf);
 }
 
-void Arduilink::setFailure(unsigned int sensorId, const char* msg) {
+void Arduilink::setFailure(unsigned int _id, const char* _msg) {
 
+}
+
+unsigned long Arduilink::getEncoded32(unsigned int _id) {
+	SensorItem* sensor = getSensor(_id);
+	if (sensor == NULL) return 0;
+	return (nodeId * 10000000) + (sensor->id * 100000) + min(String(sensor->value).toInt(), 99999);
 }
 
 int Arduilink::handleInput() {

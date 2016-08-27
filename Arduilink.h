@@ -50,17 +50,17 @@ public:
 	/**
 	 * Update the current value of a sensor.
 	 */
-	void setValue(unsigned int sensorId, const char* sensorValue);
+	SensorItem* setValue(unsigned int sensorId, const char* sensorValue);
 
 	/**
 	* Update the current value of a sensor.
 	*/
-	void setValue(unsigned int sensorId, double sensorValue);
+	SensorItem* setValue(unsigned int sensorId, double sensorValue);
 
 	/**
 	* Update the current value of a sensor.
 	*/
-	void setValue(unsigned int sensorId, unsigned long sensorValue);
+	SensorItem* setValue(unsigned int sensorId, unsigned long sensorValue);
 	
 	/**
 	 * Send an operation to a sensor.
@@ -76,6 +76,11 @@ public:
 	 * Indicate that sensor returns an error.
 	 */
 	void setFailure(unsigned int sensorId, const char* msg);
+
+	/**
+	 * Return current value of this sensor as encoded 32 long.
+	 */
+	unsigned long getEncoded32(unsigned int sensorId);
 
 	/**
 	 * Describes all sensors and sends the information on the serial link .
