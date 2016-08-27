@@ -166,15 +166,18 @@ def start_client_socket(halt, conn, addr):
 	conn.close()
 
 def broadcast_data(nodeId, sensorId, value):
+	i = 0
 	for sock in list:
 		addr = sock.getpeername()
-		key = addr[0] + ':' + str(addr[1]) + '=' + nodeId + ':' + sensorId
-		if key in watchs:
+		key1 = addr[0] + ':' + str(addr[1]) + '=' + nodeId + ':' + sensorId
+		key2 = addr[0] + ':' + str(addr[1]) + '=ALL:ALL'
+		if (key1 in watchs) or (key2 in watchs):
 			try:
+				++i
 				sock.send("DATA;{0};{1};{2}\n".format(nodeId, sensorId, value))
 			except:
 				continue
-
+	print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Serial: received data -> node=" + str(nodeId) + " sensor=" + str(sensorId) + " value=" + str(value) + " (" + str(i) + " listener(s))"
 #	
 ################### ARDUINO SERIAL
 #
@@ -215,9 +218,9 @@ def start_serial(halt, port, baudrate):
 				try:
 					broadcast_data(toks[1], toks[2], toks[3])
 				except Exception as e:
-					print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Serial: error on broadcast,", e
+					print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Socket: error on broadcast,", e
 			else:
-				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Serial: received info -> " + data
+				print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Serial: received info ->", data
 			lock.release()
 	except BaseException as error:
 		print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), 'Serial: error ', sys.exc_info()[0], str(error)

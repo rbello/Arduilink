@@ -36,12 +36,12 @@ except getopt.GetoptError as err:
 # Configuration
 for opt, arg in opts:
 	if opt in ('-h', '--help'):
-		print 'arduilink_client.py [--debug] [-p port] [-m mode] [-t targetSensor] [-r command]'
+		print 'arduilink_client.py [--debug] <-m mode> [-t targetSensor] [-p port] [-r command]'
 		print 'Options are:'
-		print ' --port or -p <port>			Change server socket port to connect.'
-		print ' --mode or -m			Get the current value of a given sensor.'
-		print ' --target or -t [node-id:]<sensor-id>	Watch for data send from a given sensor.'
-		print ' --value or -v			Value.'
+		print ' --mode or -m				Modes: get, set, watch.'
+		print ' --port or -p <port>		Change server socket port to connect.'
+		print ' --target or -t [node-id:]<sensor-id>	Target sensor.'
+		print ' --value or -v			Get the current value of a given sensor.'
 		print ' --run or -r <command>			With watch mode, run the given command';
 		print '					each time a data was received.'
 		print ' --debug				Enable debug mode.'
@@ -69,9 +69,11 @@ for opt, arg in opts:
 sock = None
 
 # On détermine le capteur cible
-if ':' in target:
+if target == 'ALL': # Tous
+	nodeId = sensorId = 'ALL'
+elif ':' in target: # Capteur du noeud donné
 	nodeId, sensorId = target.split(':', 2)
-else:
+else: # Capteur du noeud par défaut (0)
 	nodeId = '0'
 	sensorId = target
 if debug == True: print time.strftime("[%Y/%m/%d %H:%M:%S]", time.gmtime()), "Target: node=", nodeId, "sensorId=", sensorId
