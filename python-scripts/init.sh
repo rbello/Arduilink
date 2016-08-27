@@ -8,6 +8,8 @@
 
 cd /var/www/html/plugins/script/core/ressources
 
+sudo chmod 777 /tmp/jeedom-cache
+
 sudo chown jeedom:www-data client.log
 sudo chown jeedom:www-data server.log
 sudo chown jeedom:www-data arduilink_server.py
