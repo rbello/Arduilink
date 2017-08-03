@@ -87,7 +87,7 @@ SensorItem* Arduilink::setValue(unsigned int _id, unsigned long _value) {
 
 void Arduilink::printSensor(SensorItem* sensor, unsigned int _nodeId) {
 	char buff[256];
-	sprintf(buff, "300;%d;%d;%d;%d;%d;%s", _nodeId, sensor->id, sensor->flags, sensor->unit, sensor->verbose, sensor->name);
+	sprintf(buff, "300;%d;%d;%d;%s;%d;%s", _nodeId, sensor->id, sensor->flags, sensor->unit, sensor->verbose, sensor->name);
 	Serial.println(buff);
 }
 
