@@ -1,6 +1,6 @@
 <?php
 
-require_once '../../../../core/php/core.inc.php';
+require_once '/var/www/html/core/php/core.inc.php';
 
 $i = 0;
 
